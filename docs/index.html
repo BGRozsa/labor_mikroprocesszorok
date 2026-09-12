@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mikroprocesszoros Rendszerek Laboratórium | Sapientia EMTE</title>
+  <meta name="description" content="Hivatalos laboratóriumi útmutató, szabályzat, 1-10-es értékelési rendszer, heti tananyag és mini projekt követelmények.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- NAVIGATION -->
+  <nav class="navbar">
+    <a href="#" class="nav-brand">
+      <span>⚡ Mikroprocesszorok</span>
+      <span class="nav-badge">Sapientia EMTE</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#hardver">Kártya & Lábkiosztás</a></li>
+      <li><a href="#szabalyzat">Szabályzat</a></li>
+      <li><a href="#erteceles">Értékelés (1–10)</a></li>
+      <li><a href="#miniprojekt">Mini Projekt</a></li>
+      <li><a href="#utemterv">Heti Ütemterv</a></li>
+      <li><a href="#git-utmutato">Git Útmutató</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+
+    <!-- HERO SECTION -->
+    <header class="hero">
+      <div class="hero-subtitle">Műszaki és Természettudományi Kar • 2026/2027</div>
+      <h1>Mikroprocesszoros Rendszerek Laboratórium</h1>
+      <p>
+        Gyakorlati beágyazott programozás <strong>STM32 Nucleo-F446ZE</strong> (Nucleo-144) kártyákon az ipari szabvány <strong>STM32CubeIDE</strong> környezetben a <a href="https://crystalclearelectronics2.eu/hu/" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline; text-underline-offset: 3px;"><strong>Kristálytiszta Elektronika 2</strong></a> tananyaga alapján.
+      </p>
+
+      <!-- FONTOS MEGJEGYZÉS: FELADATOK ÉS KÓDÍRÁS -->
+      <div style="background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; margin: 1.5rem auto; max-width: 820px; text-align: left; font-size: 0.95rem;">
+        <strong style="color: var(--accent-cyan); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem;">
+          📌 Fontos tudnivaló a laborfeladatokról:
+        </strong>
+        A heti mappákban <strong>kizárólag a feladat leírása és az útmutató tananyag</strong> található (kész megoldáskód nincs előre behelyezve). 
+        A feladatokat a hallgatóknak <strong>önállóan</strong> kell megvalósítaniuk: a CubeIDE-ben létrehozott saját projektben megírni a kódot a labor kártyájához, majd a megoldást commitolni és pusholni a saját repóba a heti jegyért!
+      </div>
+
+      <div class="hero-tags">
+        <a href="https://crystalclearelectronics2.eu/hu/" target="_blank" rel="noopener noreferrer" class="tag tag-highlight" title="Kristálytiszta Elektronika 2 hivatalos tananyag weboldal">
+          📘 Kristálytiszta Elektronika 2 ↗
+        </a>
+        <a href="#hardver" class="tag" title="Ugrás a kártya és lábkiosztás szekcióhoz">
+          🔧 STM32 Nucleo-F446ZE
+        </a>
+        <a href="https://www.st.com/en/development-tools/stm32cubeide.html" target="_blank" rel="noopener noreferrer" class="tag" title="STMicroelectronics STM32CubeIDE">
+          💻 STM32CubeIDE ↗
+        </a>
+        <a href="#erteceles" class="tag" title="Ugrás az értékelési rendszerhez">
+          📊 1–10 Jegyrendszer
+        </a>
+        <a href="#git-utmutato" class="tag" title="Ugrás a Git munkafolyamathoz">
+          🐙 Git & GitHub
+        </a>
+      </div>
+    </header>
+
+    <!-- SECTION: FEJLESZTŐI KÁRTYA & LÁBKIOSZTÁS -->
+    <section id="hardver">
+      <div class="section-header">
+        <h2>🛠️ STM32 Nucleo-F446ZE Fejlesztői Kártya & Lábkiosztás</h2>
+        <p>A laboratórium hivatalos hardvere, 144 lábú kiosztás, ST Zio és Morpho csatlakozók, periféria térkép</p>
+      </div>
+
+      <!-- KÁRTYA ÁTTEKINTÉS ÉS FŐBB SPECIFIKÁCIÓK -->
+      <div class="card board-card" style="margin-bottom: 2rem;">
+        <div class="board-overview-grid">
+          <div class="board-image-wrap">
+            <img src="img/nucleo_f446ze.jpg" alt="STM32 Nucleo-F446ZE Fejlesztői Kártya" class="board-photo">
+            <div class="board-photo-badge">STM32 Nucleo-144</div>
+          </div>
+          <div class="board-info-wrap">
+            <div class="board-chip-title">
+              <span class="chip-label">Mikrokontroller</span>
+              <h3>STM32F446ZET6 (LQFP-144)</h3>
+            </div>
+            <p class="board-summary">
+              A laboratórium során használt nagy teljesítményű, 144 lábú STM32 Nucleo-144 fejlesztőkártya, amely széleskörű csatlakozási lehetőséget nyújt Arduino™ Uno V3 kompatibilis ST Zio és teljes hozzáférést biztosító ST Morpho csatlakozókkal.
+            </p>
+
+            <div class="specs-grid">
+              <div class="spec-item">
+                <span class="spec-icon">⚡</span>
+                <div>
+                  <strong>ARM® Cortex®-M4F</strong>
+                  <small>FPU + ART Accelerator, 180 MHz</small>
+                </div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">💾</span>
+                <div>
+                  <strong>512 KB Flash / 128 KB SRAM</strong>
+                  <small>Egységes 32 bites memóriatérkép</small>
+                </div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">🔌</span>
+                <div>
+                  <strong>ST-LINK/V2-1 Debugger</strong>
+                  <small>SWD, Virtual COM port & Mass Storage</small>
+                </div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">💡</span>
+                <div>
+                  <strong>3 Felhasználói LED & Gomb</strong>
+                  <small>LD1 (PB0), LD2 (PB7), LD3 (PB14), B1 (PC13)</small>
+                </div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">🎛️</span>
+                <div>
+                  <strong>Perifériák</strong>
+                  <small>4x SPI, 4x I2C, 4x USART + 2x UART, 2x CAN</small>
+                </div>
+              </div>
+              <div class="spec-item">
+                <span class="spec-icon">📊</span>
+                <div>
+                  <strong>Analóg blokkok</strong>
+                  <small>3x 12 bites ADC (16 csatorna), 2x 12 bites DAC</small>
+                </div>
+              </div>
+            </div>
+
+            <div class="doc-links">
+              <a href="https://www.st.com/resource/en/user_manual/um1974-stm32-nucleo144-boards-mb1137-stmicroelectronics.pdf" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                <span>📄 Hivatalos Kézikönyv (UM1974 PDF)</span>
+                <span class="external-icon">↗</span>
+              </a>
+              <a href="https://www.st.com/en/evaluation-tools/nucleo-f446ze.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                <span>🏛️ ST.com Termékoldal</span>
+                <span class="external-icon">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERAKTÍV LÁBKIOSZTÁSI DIAGRAMOK & TÁBLÁZATOK -->
+      <div class="diagram-section-card">
+        <div class="diagram-tabs-header">
+          <div class="tab-title-group">
+            <h3>📌 Lábkiosztási Diagramok & Periféria Gyorskereső</h3>
+            <p>Válassz nézetet a csatlakozótüskék vagy a periféria lábak böngészéséhez:</p>
+          </div>
+          <div class="diagram-tabs" role="tablist">
+            <button class="diagram-tab-btn active" data-tab="tab-zio" role="tab" aria-selected="true">
+              ST Zio (Arduino™ Uno)
+            </button>
+            <button class="diagram-tab-btn" data-tab="tab-morpho" role="tab" aria-selected="false">
+              ST Morpho (Teljes Kiosztás)
+            </button>
+            <button class="diagram-tab-btn" data-tab="tab-periferiak" role="tab" aria-selected="false">
+              Periféria Térkép
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 1: ST ZIO CONNECTORS -->
+        <div class="diagram-panel active" id="tab-zio" role="tabpanel">
+          <div class="panel-desc-alert">
+            <strong>💡 ST Zio Csatlakozó:</strong> Az Arduino™ Uno V3 szabvánnyal kompatibilis kivezetések (A0–A5, D0–D15) és a kiegészítő Nucleo-144 jelek. A laborgyakorlatok során a külső modulokat és érzékelőket elsősorban ezekre a tüskesorokra kötjük be.
+          </div>
+          <div class="diagram-grid">
+            <div class="diagram-box">
+              <div class="diagram-box-header">
+                <h4>ST Zio Csatlakozók — Bal Oldal (CN7, CN8, CN9)</h4>
+                <a href="img/nucleo_f446ze_zio_left.jpg" target="_blank" class="zoom-link" title="Megnyitás teljes méretben">Nagyítás ↗</a>
+              </div>
+              <div class="diagram-img-wrap">
+                <img src="img/nucleo_f446ze_zio_left.jpg" alt="ST Zio Bal Oldal Lábkiosztás" loading="lazy">
+              </div>
+            </div>
+            <div class="diagram-box">
+              <div class="diagram-box-header">
+                <h4>ST Zio Csatlakozók — Jobb Oldal (CN10, CN11, CN12)</h4>
+                <a href="img/nucleo_f446ze_zio_right.jpg" target="_blank" class="zoom-link" title="Megnyitás teljes méretben">Nagyítás ↗</a>
+              </div>
+              <div class="diagram-img-wrap">
+                <img src="img/nucleo_f446ze_zio_right.jpg" alt="ST Zio Jobb Oldal Lábkiosztás" loading="lazy">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: ST MORPHO CONNECTORS -->
+        <div class="diagram-panel" id="tab-morpho" role="tabpanel" style="display: none;">
+          <div class="panel-desc-alert">
+            <strong>🔌 ST Morpho Csatlakozó:</strong> A kétoldali sűrű tüskesor közvetlen hozzáférést biztosít a kontroller mind az 144 kivezetéséhez (CN11 és CN12).
+          </div>
+          <div class="diagram-grid">
+            <div class="diagram-box">
+              <div class="diagram-box-header">
+                <h4>ST Morpho Csatlakozók — Bal Oldal (CN11)</h4>
+                <a href="img/nucleo_f446ze_morpho_left.jpg" target="_blank" class="zoom-link" title="Megnyitás teljes méretben">Nagyítás ↗</a>
+              </div>
+              <div class="diagram-img-wrap">
+                <img src="img/nucleo_f446ze_morpho_left.jpg" alt="ST Morpho Bal Oldal Lábkiosztás" loading="lazy">
+              </div>
+            </div>
+            <div class="diagram-box">
+              <div class="diagram-box-header">
+                <h4>ST Morpho Csatlakozók — Jobb Oldal (CN12)</h4>
+                <a href="img/nucleo_f446ze_morpho_right.jpg" target="_blank" class="zoom-link" title="Megnyitás teljes méretben">Nagyítás ↗</a>
+              </div>
+              <div class="diagram-img-wrap">
+                <img src="img/nucleo_f446ze_morpho_right.jpg" alt="ST Morpho Jobb Oldal Lábkiosztás" loading="lazy">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: PERIFÉRIA GYORSKERESŐ TÁBLÁZAT -->
+        <div class="diagram-panel" id="tab-periferiak" role="tabpanel" style="display: none;">
+          <div class="panel-desc-alert">
+            <strong>⚡ Leggyakrabban használt laboratóriumi lábak:</strong> Az alábbi táblázatban azonnal megtalálod a heti feladatokhoz szükséges gyári LED, nyomógomb és kommunikációs busz kivezetéseket.
+          </div>
+          <div class="table-responsive">
+            <table class="pin-mapping-table">
+              <thead>
+                <tr>
+                  <th>Funkció / Periféria</th>
+                  <th>Kivezetés (Pin)</th>
+                  <th>ST Zio / Csatlakozó</th>
+                  <th>Leírás & Használat a Laboron</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="pin-badge led-green">LD1 (Zöld LED)</span></td>
+                  <td><code>PB0</code></td>
+                  <td>Alaplapi LED</td>
+                  <td>Labor 02: Első GPIO kimeneti és villogtató programok, futás visszajelzés</td>
+                </tr>
+                <tr>
+                  <td><span class="pin-badge led-blue">LD2 (Kék LED)</span></td>
+                  <td><code>PB7</code></td>
+                  <td>Alaplapi LED</td>
+                  <td>Állapotgép és időzített villogtatás (Timer/PWM)</td>
+                </tr>
+                <tr>
+                  <td><span class="pin-badge led-red">LD3 (Piros LED)</span></td>
+                  <td><code>PB14</code></td>
+                  <td>Alaplapi LED</td>
+                  <td>Hibaállapot vagy küszöbérték túllépés jelzése</td>
+                </tr>
+                <tr>
+                  <td><span class="pin-badge button-blue">B1 Felhasználói Gomb</span></td>
+                  <td><code>PC13</code></td>
+                  <td>Alaplapi Nyomógomb</td>
+                  <td>Kék gomb, aktív alacsony (Pull-up javasolt), külső megszakítás (EXTI13)</td>
+                </tr>
+                <tr>
+                  <td><span class="pin-badge uart">ST-Link Virtual COM</span></td>
+                  <td><code>PD8</code> (TX), <code>PD9</code> (RX)</td>
+                  <td>USART3 (USB-n keresztül)</td>
+                  <td>Soros terminál (PuTTY / TeraTerm), printf kimenet PC-re</td>
+                </tr>
+                <tr>
+                  <td><span class="pin-badge i2c">I2C1 Busz</span></td>
+                  <td><code>PB8</code> (SCL), <code>PB9</code> (SDA)</td>
+                  <td>D15 (SCL), D14 (SDA)</td>
+                  <td>Külső digitális hőmérő, OLED kijelző és környezeti szenzorok</td>
+                </tr>
+                <tr>
+                  <td><span class="pin-badge spi">SPI1 Busz</span></td>
+                  <td><code>PA5</code> (SCK), <code>PA6</code> (MISO), <code>PA7</code> (MOSI), <code>PD14</code> (CS)</td>
+                  <td>D13 (SCK), D12 (MISO), D11 (MOSI)</td>
+                  <td>Nagysebességű grafikus kijelzők, SPI memóriák</td>
+                </tr>
+                <tr>
+                  <td><span class="pin-badge adc">Analóg Bemenetek (ADC)</span></td>
+                  <td><code>PA3</code> (A0), <code>PC0</code> (A1), <code>PC3</code> (A2)</td>
+                  <td>A0, A1, A2 tüskék</td>
+                  <td>Potenciométer, analóg fotoellenállás vagy analóg hőmérő mérése</td>
+                </tr>
+                <tr>
+                  <td><span class="pin-badge dac">Analóg Kimenet (DAC)</span></td>
+                  <td><code>PA4</code> (DAC_OUT1)</td>
+                  <td>A2 tüske / CN9-4</td>
+                  <td>Labor 07: Szinusz és tetszőleges analóg feszültség előállítása</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: SZABÁLYZAT -->
+    <section id="szabalyzat">
+      <div class="section-header">
+        <h2>📜 Laboratóriumi Szabályzat & Tudnivalók</h2>
+        <p>Gyakorlati előírások, jelenléti szabályok és a laboratórium rendje</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card accent-rose">
+          <div class="card-icon">✍️</div>
+          <h3>1. Munkavédelem (Első Labor)</h3>
+          <p>A legelső laborfoglalkozás alkalmával <strong>kötelező aláírni a munkavédelmi jegyzőkönyvet</strong>.</p>
+          <ul>
+            <li>Ennek hiányában a hallgató nem vehet részt a laboratóriumi méréseken.</li>
+            <li>Bekötéseket, vezetékmozgatást csak <strong>feszültségmentesített</strong> állapotban (USB kihúzva) végezz!</li>
+            <li>Melegedés vagy zárlat gyanúja esetén azonnal áramtalaníts és értesítsd az oktatót.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-indigo">
+          <div class="card-icon">🖥️</div>
+          <h3>2. Állandó Munkaállomás</h3>
+          <p>A félév során kérjük, hogy <strong>mindenki mindig ugyanahhoz a géphez üljön</strong>!</p>
+          <ul>
+            <li>Így megmaradnak a saját beállításaid, a CubeIDE környezet és a lokálisan mentett projektjeid.</li>
+            <li>Segíti a terem rendjének és az eszközök épségének megőrzését.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-emerald">
+          <div class="card-icon">👥</div>
+          <h3>3. Jelenlét & Pótlási Lehetőség</h3>
+          <p>A laborgyakorlatokon való részvétel a tantárgy teljesítésének alapfeltétele.</p>
+          <ul>
+            <li><strong>Legfeljebb 3 hiányzás a megengedett</strong> a félév során.</li>
+            <li><strong>Átjárhatóság:</strong> Ha nem tudsz a saját csoportoddal jönni, <strong>másik csoporttal is bejöhetsz pótolni</strong>!</li>
+            <li><strong>A legfontosabb cél: NE MARADJATOK LE!</strong> A tananyag heti lépésekben egymásra épül, a kimaradt témát azonnal pótold.</li>
+          </ul>
+        </div>
+
+        <div class="card accent-amber">
+          <div class="card-icon">💯</div>
+          <h3>4. Heti Jegyadás (Labor Performance)</h3>
+          <p>A félév során <strong>minden laborra külön jegyet kapsz (1–10)</strong>!</p>
+          <ul>
+            <li>Értékeljük az órán végzett önálló munkát, a hardveres működést és a Git commit minőségét.</li>
+            <li>A feladat leírása alapján megírt kódot a megadott heti határidőig fel kell tölteni a saját Git repódba.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: ÉRTÉKELÉS -->
+    <section id="erteceles">
+      <div class="section-header">
+        <h2>📊 Értékelési Rendszer (1–10 Skála, 50% - 50%)</h2>
+        <p>A Sapientia EMTE romániai felsőoktatási osztályozási rendszere szerint</p>
+      </div>
+
+      <div class="grading-container">
+        <table class="grading-table">
+          <thead>
+            <tr>
+              <th>Komponens</th>
+              <th>Súly</th>
+              <th>Részletek (1–10 skála)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Előadás Jegy</strong></td>
+              <td><strong>50%</strong></td>
+              <td>Elméleti vizsga / zárthelyi dolgozat eredménye.</td>
+            </tr>
+            <tr>
+              <td><strong>Laboratóriumi Jegy</strong></td>
+              <td><strong>50%</strong></td>
+              <td>
+                Két komponensből áll össze:
+                <ul style="margin-top: 0.4rem; padding-left: 1.2rem;">
+                  <li><strong>Labor performance:</strong> heti laborjegyek átlaga (minden laborra külön jegy)</li>
+                  <li><strong>Mini projekt:</strong> félév végi bemutató jegye</li>
+                </ul>
+                <code style="display: inline-block; margin-top: 0.5rem;">Labor = (Heti Átlag + Mini Projekt) / 2</code>
+              </td>
+            </tr>
+            <tr style="background: rgba(255,255,255,0.04);">
+              <td><strong>Végső Féléves Jegy</strong></td>
+              <td><strong>100%</strong></td>
+              <td><code>Végső = (Előadás × 0.5) + (Labor × 0.5)</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION: MINI PROJEKT -->
+    <section id="miniprojekt">
+      <div class="section-header">
+        <h2>🏆 Félév Végi Mini Projekt</h2>
+        <p>3-4 megismert modul összekapcsolása egy működő beágyazott rendszerben</p>
+      </div>
+
+      <div class="card" style="margin-bottom: 2rem; border-color: rgba(6, 182, 212, 0.3);">
+        <h3 style="color: var(--accent-cyan); margin-bottom: 0.5rem;">Mi a követelmény?</h3>
+        <p>
+          A félév végén a heti laborokon megismert perifériák közül 
+          <strong>legalább 3-4 modult felhasználva</strong> kell önállóan működő <strong>mini projektet</strong> tervezni és megvalósítani.
+          A cél annak bizonyítása, hogy az egyes perifériák konfigurálását és vezérlését képes vagy egyetlen összehangolt C szoftverré integrálni.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <!-- Példa 1 -->
+        <div class="card accent-emerald">
+          <div class="card-icon">🎛️</div>
+          <h3>1. AD + Kijelző + PWM</h3>
+          <p><strong>Összetevők:</strong> Analóg bemenet (potméter vagy analóg fény/hőmérséklet szenzor ADC-vel) &rarr; Állapot és mért értékek kiírása LCD/OLED kijelzőre &rarr; PWM kimenet vezérlése (LED fényerő vagy DC ventilátor fordulatszám szabályozása).</p>
+        </div>
+
+        <!-- Példa 2 -->
+        <div class="card accent-indigo">
+          <div class="card-icon">⏰</div>
+          <h3>2. RTC + Szenzor + Kijelzés</h3>
+          <p><strong>Összetevők:</strong> Valós idejű óra (RTC) &rarr; I2C/SPI digitális környezeti érzékelő (hőmérséklet, páratartalom) periodikus olvasása &rarr; Időbélyeges adatok megjelenítése kijelzőn vagy UART terminálon keresztüli naplózás.</p>
+        </div>
+
+        <!-- Példa 3 -->
+        <div class="card accent-amber">
+          <div class="card-icon">🏓</div>
+          <h3>3. Pong Játék</h3>
+          <p><strong>Összetevők:</strong> Kijelző (OLED / LCD grafikus megjelenítés) &rarr; Analóg potméteres ütőpozíció (ADC) &rarr; Időzített labdamozgás (Timer megszakítás) &rarr; Pontszerzéskor hang- vagy LED visszajelzés.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: HETI ÜTEMTERV -->
+    <section id="utemterv">
+      <div class="section-header">
+        <h2>🗓️ Heti Labor Ütemterv (<a href="https://crystalclearelectronics2.eu/hu/" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">Kristálytiszta Elektronika 2 ↗</a>)</h2>
+        <p>A 12 laboratóriumi fejezet témakörei és feladatai</p>
+      </div>
+
+      <div class="schedule-grid">
+        <!-- Labor 01 (Fejezet 04) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 01 • FEJEZET 04</span>
+            <span class="lab-badge">1. Hét</span>
+          </div>
+          <div class="lab-title">STM Programozási Környezet: CubeIDE, ST-Link</div>
+          <p class="lab-desc">Munkavédelmi aláírás! CubeIDE projektstruktúra, moduláris forráskezelés (.c/.h és include útvonalak), CubeMX konfiguráció és ST-Link programozás.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_01</span>
+          </div>
+        </div>
+
+        <!-- Labor 02 (Fejezet 07) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 02 • FEJEZET 07</span>
+            <span class="lab-badge">2. Hét</span>
+          </div>
+          <div class="lab-title">A Mikrokontroller I/O Portjai (GPIO)</div>
+          <p class="lab-desc">Digitális be- és kimenetek, LED futófény, nyomógomb beolvasása, szoftveres pergésmentesítés és 4 bites bináris számláló.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_02</span>
+          </div>
+        </div>
+
+        <!-- Labor 03 (Fejezet 08) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 03 • FEJEZET 08</span>
+            <span class="lab-badge">3. Hét</span>
+          </div>
+          <div class="lab-title">Soros Kommunikáció I. (I2C & SPI)</div>
+          <p class="lab-desc">Szinkron soros buszok (I2C & SPI), TSL2561 digitális fénymérő szenzor kiolvasása (Simple és Memory mód), fényszint jelzése LED-eken.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_03</span>
+          </div>
+        </div>
+
+        <!-- Labor 04 (Fejezet 09) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 04 • FEJEZET 09</span>
+            <span class="lab-badge">4. Hét</span>
+          </div>
+          <div class="lab-title">Ember-Gép Kapcsolat Eszközei (HMI)</div>
+          <p class="lab-desc">HMI eszközök, SSD1306 grafikus I2C OLED kijelző (128x64) meghajtása, memóriabeli képernyőpuffer, betűkészletek és alakzatok rajzolása.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_04</span>
+          </div>
+        </div>
+
+        <!-- Labor 05 (Fejezet 10) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 05 • FEJEZET 10</span>
+            <span class="lab-badge">5. Hét</span>
+          </div>
+          <div class="lab-title">Soros Kommunikáció II. (UART)</div>
+          <p class="lab-desc">Aszinkron kommunikáció (UART, CAN, USB), kétirányú UART adatátvitel és heartbeat jelzés, virtuális USB HID egér vezérlése gombokkal.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_05</span>
+          </div>
+        </div>
+
+        <!-- Labor 06 (Fejezet 11) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 06 • FEJEZET 11</span>
+            <span class="lab-badge">6. Hét</span>
+          </div>
+          <div class="lab-title">Analóg-Digitális Átalakítás (ADC)</div>
+          <p class="lab-desc">Analóg feszültségmérés 12 bites SAR ADC-vel, potenciométer beolvasása blokkoló (polling) és megszakításos (IT) módban, szoftveres átlagolás.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_06</span>
+          </div>
+        </div>
+
+        <!-- Labor 07 (Fejezet 12) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 07 • FEJEZET 12</span>
+            <span class="lab-badge">7. Hét</span>
+          </div>
+          <div class="lab-title">Digitális-Analóg Átalakítás (DAC)</div>
+          <p class="lab-desc">Digitális-analóg átalakítás (DAC), fix analóg feszültség mérése multiméterrel, 100 pontos szinusz Look-Up Table szoftveres és timeres generálása.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_07</span>
+          </div>
+        </div>
+
+        <!-- Labor 08 (Fejezet 13) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 08 • FEJEZET 13</span>
+            <span class="lab-badge">8. Hét</span>
+          </div>
+          <div class="lab-title">Szenzortípusok és Alkalmazásuk</div>
+          <p class="lab-desc">Szenzortípusok és átviteli karakterisztikák, I2C környezeti szenzorok (APDS9300 fénymérő, LM75A hőmérő, HIH8120 páratartalom) és OLED megjelenítés.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_08</span>
+          </div>
+        </div>
+
+        <!-- Labor 09 (Fejezet 14) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 09 • FEJEZET 14</span>
+            <span class="lab-badge">9. Hét</span>
+          </div>
+          <div class="lab-title">Szenzorok Kalibrálása</div>
+          <p class="lab-desc">Kalibráció elmélete, NTC termisztoros feszültségosztó mérése ADC-vel, egypontos (zéruspontos) kalibrációs állapotgép megvalósítása jégvízzel és OLED kijelzővel.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_09</span>
+          </div>
+        </div>
+
+        <!-- Labor 10 (Fejezet 15) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 10 • FEJEZET 15</span>
+            <span class="lab-badge">10. Hét</span>
+          </div>
+          <div class="lab-title">Számláló és Timer Egységek, WDT</div>
+          <p class="lab-desc">Hardveres számlálók és időzítők, precíz 1 Hz-es periodikus megszakítás LED villogtatáshoz, független Watchdog Timer (IWDG) védelem.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_10</span>
+          </div>
+        </div>
+
+        <!-- Labor 11 (Fejezet 16) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 11 • FEJEZET 16</span>
+            <span class="lab-badge">11. Hét</span>
+          </div>
+          <div class="lab-title">Real-Time Clock (Valós Idejű Óra)</div>
+          <p class="lab-desc">RTC naptár- és óraperiféria LSE kristályról (32.768 kHz), BCD kódolás, komplett ébresztőóra állapotgép kezelőgombokkal (EXTI) és OLED-del.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_11</span>
+          </div>
+        </div>
+
+        <!-- Labor 12 (Fejezet 17) -->
+        <div class="lab-item">
+          <div class="lab-header">
+            <span class="lab-num">LABOR 12 • FEJEZET 17</span>
+            <span class="lab-badge">12. Hét</span>
+          </div>
+          <div class="lab-title">Villamos Motorok Vezérlése</div>
+          <p class="lab-desc">Villamos gépek elve, DC mikromotor vezérlése BD6211F H-híddal (PWM és analóg DAC mód), kvadratúra enkóder feldolgozása és fordulatszámmérés.</p>
+          <div class="lab-meta">
+            <span class="lab-folder">📁 labor_12</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: GIT ÚTMUTATÓ -->
+    <section id="git-utmutato">
+      <div class="section-header">
+        <h2>🚀 Git Munkafolyamat Diákoknak</h2>
+        <p>Hogyan dolgoztok a saját repótokban és hogyan adjátok le a heti feladatot a jegyért</p>
+      </div>
+
+      <div class="step-list">
+        <!-- 1. Lépés -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-title">Egyéni privát repó előkészítése (Egyszer a félév elején)</div>
+          </div>
+          <p>A repó <strong>már tartalmazza az összes heti labor (Labor 01 &ndash; Labor 12) teljes feladatsorát és tananyagát</strong>! Hozz létre egy saját <strong>privát (Private)</strong> repót a GitHub fiókodon <code>mcu-labor-2026</code> néven, és add hozzá az oktatót Collaboratorként:</p>
+          <div class="code-block">
+            <button class="copy-btn">Másolás</button>
+            <code>git clone https://github.com/szigetipeter/labor_mikroprocesszorok.git mcu-labor
+cd mcu-labor
+git remote rename origin upstream
+git remote add origin https://github.com/FELHASZNALONEVED/mcu-labor-2026.git
+git push -u origin main</code>
+          </div>
+        </div>
+
+        <!-- 2. Lépés -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-title">Heti feladatmegoldás STM32CubeIDE-ben</div>
+          </div>
+          <p>Az adott héten csak nyisd meg az aktuális labor mappáját (pl. <code>labor_02</code>). Olvasd el a <code>README.md</code> feladatleírást és a mellékelt PDF tananyagot. Hozz létre egy új CubeIDE projektet a kártyádhoz, konfiguráld a hardvert, és írd meg a C kódot!</p>
+        </div>
+
+        <!-- 3. Lépés -->
+        <div class="step-card">
+          <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-title">Saját megoldás feltöltése a heti jegyért</div>
+          </div>
+          <p>A megírt CubeIDE projektet az adott heti mappába mentve commitold és pushold a saját GitHub repódba a határidő előtt:</p>
+          <div class="code-block">
+            <button class="copy-btn">Másolás</button>
+            <code>git add .
+git commit -m "Labor XX feladat megoldva"
+git push origin main</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <p>&copy; 2026 Sapientia EMTE — Műszaki és Természettudományi Kar • Mikroprocesszoros Rendszerek Laboratórium</p>
+      <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-dim);">
+        <a href="https://crystalclearelectronics2.eu/hu/" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: none;">Kristálytiszta Elektronika 2 tananyag ↗</a> • 1–10-es Romániai Felsőoktatási Értékelési Rendszer
+      </p>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

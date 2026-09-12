@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Labor 05: STM32 Nucleo UART &amp; USB HID Interaktív Szimulátor</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-border: #334155;
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-badge {
+      background: #0284c7;
+      color: white;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      margin-top: 0.15rem;
+    }
+
+    .controls-bar {
+      background: #182234;
+      padding: 0.65rem 2rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #334155;
+      border-color: var(--accent-cyan);
+    }
+
+    .btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: white;
+    }
+
+    .btn-action {
+      background: #059669;
+      border: none;
+      color: white;
+      padding: 0.45rem 1.1rem;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-action:hover {
+      background: #10b981;
+    }
+
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      flex: 1;
+      gap: 1.25rem;
+      padding: 1.25rem 2rem;
+      overflow: hidden;
+    }
+
+    .workspace {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .board-svg-wrap {
+      width: 100%;
+      max-width: 780px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+      max-height: calc(100vh - 150px);
+    }
+
+    .info-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .info-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* POSITIONS LIST (HTML) */
+    .pos-item {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.6rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .pos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      margin-bottom: 0.3rem;
+    }
+
+    .pos-header.red { color: #fca5a5; }
+    .pos-header.yellow { color: #fde68a; }
+    .pos-header.green { color: #a7f3d0; }
+    .pos-header.blue { color: #bfdbfe; }
+    .pos-header.cyan { color: #a5f3fc; }
+
+    .pos-coord {
+      display: inline-block;
+      background: #1e293b;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 700;
+      color: #38bdf8;
+      margin: 0 0.2rem;
+    }
+
+    .polarity-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .polarity-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+      font-size: 0.8rem;
+    }
+
+    .tag-anode {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .tag-cathode {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border: 1px solid #3b82f6;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .state-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .state-table th {
+      text-align: left;
+      padding: 0.35rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid #334155;
+    }
+
+    .state-table td {
+      padding: 0.4rem 0.35rem;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      background: #475569;
+    }
+
+    .status-dot.on-red { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+    .status-dot.on-yellow { background: #eab308; box-shadow: 0 0 8px #eab308; }
+    .status-dot.on-green { background: #10b981; box-shadow: 0 0 8px #10b981; }
+    .status-dot.on-blue { background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+
+    .code-monitor {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #38bdf8;
+      line-height: 1.4;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .hover-tooltip {
+      position: absolute;
+      background: #0f172a;
+      border: 1px solid var(--accent-cyan);
+      color: white;
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      pointer-events: none;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+
+    footer {
+      background: #090d16;
+      border-top: 1px solid var(--card-border);
+      padding: 0.5rem 2rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 1024px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">
+      <span class="header-badge">UART &amp; USB BEKÖTÉS</span>
+      <div>
+        <h1>Labor 05: STM32 Nucleo UART &amp; USB HID Interaktív Szimulátor</h1>
+        <div class="subtitle">HMI gombsor, USART6 (PG14/PG9) és USB_OTG_FS (PA11/PA12) pontos lábkiosztása &amp; élő működése</div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <a href="README.md" class="btn">📖 Vissza a README-hez</a>
+    </div>
+  </header>
+
+  <div class="controls-bar">
+    <div class="btn-group">
+      <button class="btn active" id="btnModeWiring" onclick="setMode('wiring')">🔍 1. Elhelyezési Nézet</button>
+      <button class="btn" id="btnModeUsb" onclick="setMode('usb')">🖱️ 2. USB HID Egér Teszt</button>
+      <button class="btn" id="btnModeUart" onclick="setMode('uart')">📡 3. UART Visszhang Teszt</button>
+    </div>
+
+    <div class="btn-group">
+      <span id="uartByteDisplay" style="font-family: monospace; font-size: 0.85rem; font-weight: 700; color: var(--accent-amber); margin-right: 0.5rem; display: none;">
+        TX: <span id="txByte">0x00</span> &nbsp;|&nbsp; RX: <span id="rxByte">0x00</span>
+      </span>
+      <button class="btn" id="btnReset" onclick="resetSimulation()">🔄 Alaphelyzet</button>
+    </div>
+  </div>
+
+  <div class="app-container">
+
+    <div class="workspace" id="workspace">
+      <div class="hover-tooltip" id="tooltip"></div>
+
+      <div class="board-svg-wrap">
+        <svg id="boardSvg" viewBox="0 0 760 600" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glowCyan" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glowAmber" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glowGreen" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+
+          <!-- ================= HMI GOMB SHIELD ================= -->
+          <g id="hmiShield">
+            <rect x="30" y="30" width="300" height="270" rx="16" fill="#0b3d24" stroke="#15803d" stroke-width="2"/>
+            <text x="180" y="54" font-size="11" font-weight="800" fill="#86efac" text-anchor="middle" letter-spacing="0.5">HMI GOMB SHIELD (RÖGZÍTETT)</text>
+            <circle cx="45" cy="45" r="3" fill="#166534"/>
+            <circle cx="315" cy="45" r="3" fill="#166534"/>
+            <circle cx="45" cy="285" r="3" fill="#166534"/>
+            <circle cx="315" cy="285" r="3" fill="#166534"/>
+
+            <!-- UP: HMI_BTN_1 / PE5 -->
+            <g class="comp-button" style="cursor:pointer;" onclick="pressButton('up')" data-info="HMI_BTN_1 (PE5) — Fel gomb: USB módban kurzor fel, UART módban 'Up' bit (0x01)">
+              <circle cx="180" cy="110" r="24" id="btnUp" fill="#334155" stroke="#38bdf8" stroke-width="2"/>
+              <path d="M 180,102 L 173,113 L 187,113 Z" fill="#e2e8f0"/>
+              <text x="180" y="146" font-size="10" font-weight="800" fill="#a5f3fc" text-anchor="middle">PE5 (BTN1)</text>
+            </g>
+
+            <!-- LEFT: HMI_BTN_2 / PE2 -->
+            <g class="comp-button" style="cursor:pointer;" onclick="pressButton('left')" data-info="HMI_BTN_2 (PE2) — Balra gomb: USB módban kurzor balra, UART módban 'Left' bit (0x04)">
+              <circle cx="100" cy="190" r="24" id="btnLeft" fill="#334155" stroke="#38bdf8" stroke-width="2"/>
+              <path d="M 92,190 L 103,183 L 103,197 Z" fill="#e2e8f0"/>
+              <text x="70" y="194" font-size="10" font-weight="800" fill="#a5f3fc" text-anchor="middle">PE2</text>
+              <text x="70" y="206" font-size="10" font-weight="800" fill="#a5f3fc" text-anchor="middle">(BTN2)</text>
+            </g>
+
+            <!-- CLICK / RESET: HMI_BTN_3 / PE3 -->
+            <g class="comp-button" style="cursor:pointer;" onclick="pressButton('click')" data-info="HMI_BTN_3 (PE3) — Középső gomb: USB módban bal kattintás, UART módban a szín/reset parancs bitje (0x10)">
+              <circle cx="180" cy="190" r="29" id="btnClick" fill="#7c2d12" stroke="#f59e0b" stroke-width="2.5"/>
+              <circle cx="180" cy="190" r="10" fill="#fbbf24"/>
+              <text x="180" y="230" font-size="10" font-weight="800" fill="#fde68a" text-anchor="middle">PE3 (BTN3)</text>
+            </g>
+
+            <!-- RIGHT: HMI_BTN_4 / PE6 -->
+            <g class="comp-button" style="cursor:pointer;" onclick="pressButton('right')" data-info="HMI_BTN_4 (PE6) — Jobbra gomb: USB módban kurzor jobbra, UART módban 'Right' bit (0x08)">
+              <circle cx="260" cy="190" r="24" id="btnRight" fill="#334155" stroke="#38bdf8" stroke-width="2"/>
+              <path d="M 268,190 L 257,183 L 257,197 Z" fill="#e2e8f0"/>
+              <text x="290" y="194" font-size="10" font-weight="800" fill="#a5f3fc" text-anchor="middle">PE6</text>
+              <text x="290" y="206" font-size="10" font-weight="800" fill="#a5f3fc" text-anchor="middle">(BTN4)</text>
+            </g>
+
+            <!-- DOWN: HMI_BTN_5 / PE4 -->
+            <g class="comp-button" style="cursor:pointer;" onclick="pressButton('down')" data-info="HMI_BTN_5 (PE4) — Le gomb: USB módban kurzor le, UART módban 'Down' bit (0x02)">
+              <circle cx="180" cy="270" r="24" id="btnDown" fill="#334155" stroke="#38bdf8" stroke-width="2"/>
+              <path d="M 180,278 L 173,267 L 187,267 Z" fill="#e2e8f0"/>
+              <text x="180" y="242" font-size="10" font-weight="800" fill="#a5f3fc" text-anchor="middle">PE4 (BTN5)</text>
+            </g>
+          </g>
+
+          <!-- ================= CONNECTOR ICONS ================= -->
+          <g id="usbConnIcon" data-info="USB_OTG_FS Device mód: D- = PA11, D+ = PA12 — a Nucleo beépített micro-USB csatlakozóján keresztül a PC-hez">
+            <rect x="400" y="110" width="130" height="46" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.5"/>
+            <rect x="410" y="122" width="26" height="20" rx="2" fill="#334155" stroke="#a855f7"/>
+            <text x="475" y="130" font-size="10" font-weight="800" fill="#e9d5ff" text-anchor="middle">USB_OTG_FS</text>
+            <text x="475" y="143" font-size="9" fill="#c4b5fd" text-anchor="middle">PA11 (D-) / PA12 (D+)</text>
+            <circle cx="522" cy="133" r="5" id="pinIndicatorUSB" fill="#475569"/>
+          </g>
+
+          <g id="uartConnIcon" data-info="USART6 aszinkron soros vonal: TX = PG14, RX = PG9 — külső USB-UART átalakítóhoz vagy partner panelhez">
+            <rect x="400" y="180" width="130" height="46" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+            <rect x="410" y="192" width="20" height="22" rx="2" fill="#334155" stroke="#38bdf8"/>
+            <circle cx="415" cy="197" r="1.6" fill="#94a3b8"/><circle cx="425" cy="197" r="1.6" fill="#94a3b8"/>
+            <circle cx="415" cy="203" r="1.6" fill="#94a3b8"/><circle cx="425" cy="203" r="1.6" fill="#94a3b8"/>
+            <circle cx="415" cy="209" r="1.6" fill="#94a3b8"/><circle cx="425" cy="209" r="1.6" fill="#94a3b8"/>
+            <text x="478" y="200" font-size="10" font-weight="800" fill="#a5f3fc" text-anchor="middle">USART6</text>
+            <text x="478" y="213" font-size="9" fill="#7dd3fc" text-anchor="middle">PG14 (TX) / PG9 (RX)</text>
+            <circle cx="522" cy="203" r="5" id="pinIndicatorUART" fill="#475569"/>
+          </g>
+
+          <!-- ================= WIRES: SHIELD -> DOCK ================= -->
+          <path d="M 180,472 L 180,320 L 180,134" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 268,472 L 268,340 L 100,340 L 100,214" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 356,472 L 356,360 L 180,360 L 180,219" fill="none" stroke="#fbbf24" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 444,472 L 444,340 L 260,340 L 260,214" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 532,472 L 532,320 L 180,320 L 180,294" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+
+          <path d="M 656,472 L 656,300 L 522,300 L 522,138" fill="none" stroke="#a855f7" stroke-width="3" stroke-linecap="round" opacity="0.85"/>
+          <path d="M 620,472 L 620,280 L 522,280 L 522,208" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+
+          <!-- ================= STM32 DOCK (BOTTOM) ================= -->
+          <g transform="translate(20, 472)">
+            <rect x="0" y="0" width="720" height="110" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+            <rect x="0" y="0" width="720" height="24" rx="8" fill="#1e293b"/>
+            <text x="15" y="16" font-size="11" font-weight="800" fill="#38bdf8">STM32 NUCLEO-F446ZE CSATLAKOZÓK</text>
+
+            <!-- PE5 -->
+            <g transform="translate(28, 36)">
+              <rect x="0" y="0" width="76" height="58" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+              <circle cx="38" cy="20" r="6" id="pinIndicatorPE5" fill="#475569"/>
+              <text x="38" y="40" font-size="11" font-weight="900" fill="#a5f3fc" text-anchor="middle">PE5</text>
+              <text x="38" y="52" font-size="7.5" font-weight="700" fill="#38bdf8" text-anchor="middle">BTN1 (Fel)</text>
+            </g>
+
+            <!-- PE2 -->
+            <g transform="translate(112, 36)">
+              <rect x="0" y="0" width="76" height="58" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2"/>
+              <circle cx="38" cy="20" r="6" id="pinIndicatorPE2" fill="#475569"/>
+              <text x="38" y="40" font-size="11" font-weight="900" fill="#fde68a" text-anchor="middle">PE2</text>
+              <text x="38" y="52" font-size="7.5" font-weight="700" fill="#f59e0b" text-anchor="middle">BTN2 (Bal)</text>
+            </g>
+
+            <!-- PE3 -->
+            <g transform="translate(196, 36)">
+              <rect x="0" y="0" width="76" height="58" rx="6" fill="#1e293b" stroke="#fbbf24" stroke-width="1.2"/>
+              <circle cx="38" cy="20" r="6" id="pinIndicatorPE3" fill="#475569"/>
+              <text x="38" y="40" font-size="11" font-weight="900" fill="#fef08a" text-anchor="middle">PE3</text>
+              <text x="38" y="52" font-size="7.5" font-weight="700" fill="#fbbf24" text-anchor="middle">BTN3 (Klikk)</text>
+            </g>
+
+            <!-- PE6 -->
+            <g transform="translate(280, 36)">
+              <rect x="0" y="0" width="76" height="58" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.2"/>
+              <circle cx="38" cy="20" r="6" id="pinIndicatorPE6" fill="#475569"/>
+              <text x="38" y="40" font-size="11" font-weight="900" fill="#a7f3d0" text-anchor="middle">PE6</text>
+              <text x="38" y="52" font-size="7.5" font-weight="700" fill="#10b981" text-anchor="middle">BTN4 (Jobb)</text>
+            </g>
+
+            <!-- PE4 -->
+            <g transform="translate(364, 36)">
+              <rect x="0" y="0" width="76" height="58" rx="6" fill="#1e293b" stroke="#3b82f6" stroke-width="1.2"/>
+              <circle cx="38" cy="20" r="6" id="pinIndicatorPE4" fill="#475569"/>
+              <text x="38" y="40" font-size="11" font-weight="900" fill="#bfdbfe" text-anchor="middle">PE4</text>
+              <text x="38" y="52" font-size="7.5" font-weight="700" fill="#3b82f6" text-anchor="middle">BTN5 (Le)</text>
+            </g>
+
+            <!-- USART6 combined -->
+            <g transform="translate(448, 36)">
+              <rect x="0" y="0" width="118" height="58" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+              <text x="59" y="18" font-size="10.5" font-weight="900" fill="#a5f3fc" text-anchor="middle">USART6</text>
+              <circle cx="30" cy="38" r="5" id="pinIndicatorPG14" fill="#475569"/>
+              <text x="30" y="52" font-size="8" font-weight="700" fill="#7dd3fc" text-anchor="middle">PG14 TX</text>
+              <circle cx="88" cy="38" r="5" id="pinIndicatorPG9" fill="#475569"/>
+              <text x="88" y="52" font-size="8" font-weight="700" fill="#7dd3fc" text-anchor="middle">PG9 RX</text>
+            </g>
+
+            <!-- USB combined -->
+            <g transform="translate(574, 36)">
+              <rect x="0" y="0" width="118" height="58" rx="6" fill="#1e293b" stroke="#a855f7" stroke-width="1.2"/>
+              <text x="59" y="18" font-size="10.5" font-weight="900" fill="#e9d5ff" text-anchor="middle">USB_OTG_FS</text>
+              <circle cx="30" cy="38" r="5" id="pinIndicatorPA11" fill="#475569"/>
+              <text x="30" y="52" font-size="8" font-weight="700" fill="#c4b5fd" text-anchor="middle">PA11 D-</text>
+              <circle cx="88" cy="38" r="5" id="pinIndicatorPA12" fill="#475569"/>
+              <text x="88" y="52" font-size="8" font-weight="700" fill="#c4b5fd" text-anchor="middle">PA12 D+</text>
+            </g>
+          </g>
+
+          <!-- ================= DEMO PANEL (RIGHT) ================= -->
+          <g id="demoWiringHint">
+            <rect x="560" y="20" width="170" height="70" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+            <text x="645" y="48" font-size="10.5" font-weight="700" fill="#475569" text-anchor="middle">Válassz szimulációs</text>
+            <text x="645" y="63" font-size="10.5" font-weight="700" fill="#475569" text-anchor="middle">módot fentről ⬆</text>
+          </g>
+
+          <!-- USB HID demo: PC screen + cursor -->
+          <g id="demoUsb" style="display:none;">
+            <rect x="560" y="15" width="170" height="120" rx="10" fill="#0f172a" stroke="#a855f7" stroke-width="2"/>
+            <text x="645" y="32" font-size="9.5" font-weight="800" fill="#e9d5ff" text-anchor="middle">PC KÉPERNYŐ</text>
+            <rect x="572" y="38" width="146" height="86" rx="4" fill="#1e293b"/>
+            <circle id="clickRipple" cx="645" cy="81" r="4" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0"/>
+            <path id="cursorIcon" transform="translate(645,81)" d="M -5,-8 L 6,0 L 0,1 L 3,9 L -1,9 L -3,1 L -8,3 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="0.6"/>
+          </g>
+
+          <!-- UART demo: terminal + heartbeat -->
+          <g id="demoUart" style="display:none;">
+            <rect x="560" y="15" width="170" height="120" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+            <text x="645" y="32" font-size="9.5" font-weight="800" fill="#a5f3fc" text-anchor="middle">TERMINÁL (PuTTY)</text>
+            <rect x="572" y="38" width="146" height="66" rx="4" fill="#020617"/>
+            <text x="580" y="52" font-size="8" font-family="monospace" fill="#38bdf8" id="termLine1">TX &gt; 0x00</text>
+            <text x="580" y="65" font-size="8" font-family="monospace" fill="#34d399" id="termLine2">RX &lt; 0x00</text>
+            <text x="580" y="78" font-size="8" font-family="monospace" fill="#64748b" id="termLine3">// várakozás gombnyomásra...</text>
+            <text x="580" y="91" font-size="8" font-family="monospace" fill="#64748b" id="termLine4"></text>
+            <circle cx="583" cy="115" r="6" id="heartbeatDot" fill="#3f1d1d"/>
+            <text x="596" y="119" font-size="8.5" font-weight="700" fill="#fca5a5">Heartbeat (PD5 / HMI_LED_3)</text>
+          </g>
+
+        </svg>
+      </div>
+    </div>
+
+    <!-- SIDEBAR WITH CLEAR HTML CARDS -->
+    <div class="sidebar">
+
+      <!-- CARD 1: PONTOS BEKÖTÉS -->
+      <div class="info-card">
+        <h3>📍 Pontos Bekötés</h3>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.7rem; line-height: 1.4;">
+          💡 A HMI gombsor és az USB/UART vonalak a fejlesztőpanelen rögzített, előre bekötött pontok — nincs önálló próbapanel-építés ebben a laborban.
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header cyan">
+            <span>HMI_BTN_1 (Fel)</span>
+            <span>STM32 PE5</span>
+          </div>
+          <div>• Szerep: <span class="pos-coord">BTN_UP</span> — USB: kurzor fel, UART: <code>Up</code> bit (0x01)</div>
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header yellow">
+            <span>HMI_BTN_2 (Balra)</span>
+            <span>STM32 PE2</span>
+          </div>
+          <div>• Szerep: <span class="pos-coord">BTN_LEFT</span> — USB: kurzor balra, UART: <code>Left</code> bit (0x04)</div>
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header red">
+            <span>HMI_BTN_3 (Középső)</span>
+            <span>STM32 PE3</span>
+          </div>
+          <div>• Szerep: <span class="pos-coord">BTN_CLICK</span> — USB: bal kattintás, UART: szín/reset parancs (0x10)</div>
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header green">
+            <span>HMI_BTN_4 (Jobbra)</span>
+            <span>STM32 PE6</span>
+          </div>
+          <div>• Szerep: <span class="pos-coord">BTN_RIGHT</span> — USB: kurzor jobbra, UART: <code>Right</code> bit (0x08)</div>
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header blue">
+            <span>HMI_BTN_5 (Le)</span>
+            <span>STM32 PE4</span>
+          </div>
+          <div>• Szerep: <span class="pos-coord">BTN_DOWN</span> — USB: kurzor le, UART: <code>Down</code> bit (0x02)</div>
+        </div>
+      </div>
+
+      <!-- CARD 2: PERIFÉRIA INFO -->
+      <div class="info-card">
+        <h3>💡 Periféria Lábkiosztás</h3>
+        <div class="polarity-box">
+          <div class="polarity-row">
+            <span class="tag-anode">USART6</span>
+            <span>PG14 = TX, PG9 = RX</span>
+          </div>
+          <div class="polarity-row">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Használat:</span>
+            <span style="font-size: 0.78rem; color: var(--accent-cyan);">115200 baud, 8N1</span>
+          </div>
+        </div>
+
+        <div class="polarity-box">
+          <div class="polarity-row">
+            <span class="tag-cathode">USB_OTG_FS</span>
+            <span>PA11 = D-, PA12 = D+</span>
+          </div>
+          <div class="polarity-row">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Mód:</span>
+            <span style="font-size: 0.78rem; color: #93c5fd;">Device (belső PHY, HID)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: REAL-TIME STATE TABLE -->
+      <div class="info-card">
+        <h3>🗺️ Állapot &amp; Lábkiosztás</h3>
+        <table class="state-table">
+          <thead>
+            <tr>
+              <th>Gomb</th>
+              <th>Pin</th>
+              <th>Bit</th>
+              <th>Állapot</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="status-dot" id="dotUp"></span> Fel</td><td><code>PE5</code></td><td><code>0x01</code></td><td id="txtUp">OFF</td></tr>
+            <tr><td><span class="status-dot" id="dotDown"></span> Le</td><td><code>PE4</code></td><td><code>0x02</code></td><td id="txtDown">OFF</td></tr>
+            <tr><td><span class="status-dot" id="dotLeft"></span> Balra</td><td><code>PE2</code></td><td><code>0x04</code></td><td id="txtLeft">OFF</td></tr>
+            <tr><td><span class="status-dot" id="dotRight"></span> Jobbra</td><td><code>PE6</code></td><td><code>0x08</code></td><td id="txtRight">OFF</td></tr>
+            <tr><td><span class="status-dot" id="dotClick"></span> Klikk</td><td><code>PE3</code></td><td><code>0x10</code></td><td id="txtClick">OFF</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CARD 4: CODE MONITOR -->
+      <div class="info-card">
+        <h3>💻 Élő main.c Kódkövető</h3>
+        <div class="code-monitor" id="codeMonitor">
+          <span style="color:#64748b;">// Válassz szimulációs módot a fenti gombokkal!</span><br>
+          <span style="color:#f43f5e; font-weight:bold;">while</span> (1) {<br>
+          &nbsp;&nbsp;<span id="codeTraceText">HAL_Delay(50);</span><br>
+          }
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <div>Sapientia EMTE — Mikrokontrollerek és Beágyazott Rendszerek Laboratórium (Labor 05)</div>
+    <div>Hardver: STM32 Nucleo-F446ZE | Szoftver: STM32CubeIDE (HAL) — USART6 &amp; USB_OTG_FS (Device)</div>
+  </footer>
+
+  <script>
+    let currentMode = 'wiring';
+    let heartbeatInterval = null;
+    let heartbeatOn = false;
+    let cursorX = 0, cursorY = 0; // offset from screen center
+    const CURSOR_STEP = 16;
+    const CURSOR_LIMIT_X = 60;
+    const CURSOR_LIMIT_Y = 30;
+
+    const buttons = {
+      up:    { pin: 'PE5', dockId: 'pinIndicatorPE5', dot: 'dotUp', txt: 'txtUp', bulb: 'btnUp', bit: 0x01 },
+      down:  { pin: 'PE4', dockId: 'pinIndicatorPE4', dot: 'dotDown', txt: 'txtDown', bulb: 'btnDown', bit: 0x02 },
+      left:  { pin: 'PE2', dockId: 'pinIndicatorPE2', dot: 'dotLeft', txt: 'txtLeft', bulb: 'btnLeft', bit: 0x04 },
+      right: { pin: 'PE6', dockId: 'pinIndicatorPE6', dot: 'dotRight', txt: 'txtRight', bulb: 'btnRight', bit: 0x08 },
+      click: { pin: 'PE3', dockId: 'pinIndicatorPE3', dot: 'dotClick', txt: 'txtClick', bulb: 'btnClick', bit: 0x10 }
+    };
+
+    function setMode(mode) {
+      currentMode = mode;
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+      heartbeatOn = false;
+
+      document.getElementById('btnModeWiring').classList.toggle('active', mode === 'wiring');
+      document.getElementById('btnModeUsb').classList.toggle('active', mode === 'usb');
+      document.getElementById('btnModeUart').classList.toggle('active', mode === 'uart');
+
+      document.getElementById('demoWiringHint').style.display = (mode === 'wiring') ? 'block' : 'none';
+      document.getElementById('demoUsb').style.display = (mode === 'usb') ? 'block' : 'none';
+      document.getElementById('demoUart').style.display = (mode === 'uart') ? 'block' : 'none';
+      document.getElementById('uartByteDisplay').style.display = (mode === 'uart') ? 'inline-block' : 'none';
+
+      resetCursor();
+      setHeartbeat(false);
+      document.getElementById('txByte').textContent = '0x00';
+      document.getElementById('rxByte').textContent = '0x00';
+
+      const monitor = document.getElementById('codeTraceText');
+      if (mode === 'wiring') {
+        monitor.innerHTML = `<span style="color:#64748b;">// Hardver ellenőrzés: gombok, USART6, USB_OTG_FS bekötése</span><br>MX_GPIO_Init(); MX_USART6_UART_Init(); MX_USB_DEVICE_Init();`;
+      } else if (mode === 'usb') {
+        monitor.innerHTML = `<span style="color:#64748b;">// Nyomj meg egy gombot az egérkurzor mozgatásához!</span><br>USBD_HID_SendReport(&amp;hUsbDeviceFS, (uint8_t*)&amp;mouseHID, sizeof(mouseHID));`;
+        document.getElementById('termLine3') && null;
+      } else if (mode === 'uart') {
+        monitor.innerHTML = `<span style="color:#64748b;">// Nyomj meg egy gombot a bájt elküldéséhez!</span><br>HAL_UART_Transmit(&amp;huart6, &amp;tx_data_byte, 1, UART_TX_TIMEOUT);`;
+        heartbeatInterval = setInterval(() => {
+          heartbeatOn = !heartbeatOn;
+          setHeartbeat(heartbeatOn);
+        }, 500);
+      }
+    }
+
+    function resetCursor() {
+      cursorX = 0;
+      cursorY = 0;
+      const cur = document.getElementById('cursorIcon');
+      if (cur) cur.setAttribute('transform', `translate(645,81)`);
+    }
+
+    function setHeartbeat(on) {
+      const dot = document.getElementById('heartbeatDot');
+      if (!dot) return;
+      dot.setAttribute('fill', on ? '#ef4444' : '#3f1d1d');
+      dot.setAttribute('filter', on ? 'url(#glowAmber)' : '');
+    }
+
+    function flashDockPin(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const original = '#475569';
+      el.setAttribute('fill', '#38bdf8');
+      el.setAttribute('filter', 'url(#glowCyan)');
+      setTimeout(() => { el.setAttribute('fill', original); el.removeAttribute('filter'); }, 220);
+    }
+
+    function pressButton(role) {
+      const b = buttons[role];
+      if (!b) return;
+
+      // Visual press feedback on the shield button + dock pin (always happens, it's a real GPIO read)
+      const bulb = document.getElementById(b.bulb);
+      if (bulb) {
+        const origFill = bulb.getAttribute('fill');
+        bulb.setAttribute('fill', '#38bdf8');
+        setTimeout(() => bulb.setAttribute('fill', origFill), 180);
+      }
+      flashDockPin(b.dockId);
+
+      // State table update
+      document.getElementById(b.dot).className = 'status-dot on-blue';
+      document.getElementById(b.txt).textContent = 'HIGH (3.3V)';
+      setTimeout(() => {
+        document.getElementById(b.dot).className = 'status-dot';
+        document.getElementById(b.txt).textContent = 'OFF';
+      }, 300);
+
+      const monitor = document.getElementById('codeTraceText');
+
+      if (currentMode === 'usb') {
+        flashDockPin('pinIndicatorPA11');
+        flashDockPin('pinIndicatorPA12');
+        moveCursor(role);
+        if (role === 'click') {
+          monitor.innerHTML = `<span style="color:#64748b;">// Bal kattintás:</span><br>mouseHID.buttons = 1; USBD_HID_SendReport(...);`;
+        } else {
+          const axis = (role === 'up' || role === 'down') ? 'y' : 'x';
+          const sign = (role === 'up' || role === 'left') ? '-' : '';
+          monitor.innerHTML = `<span style="color:#64748b;">// Irány: ${role}</span><br>mouseHID.${axis} = ${sign}MOUSE_STEP_SIZE; USBD_HID_SendReport(...);`;
+        }
+      } else if (currentMode === 'uart') {
+        flashDockPin('pinIndicatorPG14');
+        sendUartByte(b.bit, role);
+        monitor.innerHTML = `<span style="color:#64748b;">// Gombállapot bájtba csomagolva:</span><br>tx_data_byte |= 0x${b.bit.toString(16).padStart(2,'0')}; HAL_UART_Transmit(&amp;huart6, &amp;tx_data_byte, 1, UART_TX_TIMEOUT);`;
+      }
+    }
+
+    function moveCursor(role) {
+      if (role === 'up') cursorY = Math.max(-CURSOR_LIMIT_Y, cursorY - CURSOR_STEP);
+      if (role === 'down') cursorY = Math.min(CURSOR_LIMIT_Y, cursorY + CURSOR_STEP);
+      if (role === 'left') cursorX = Math.max(-CURSOR_LIMIT_X, cursorX - CURSOR_STEP);
+      if (role === 'right') cursorX = Math.min(CURSOR_LIMIT_X, cursorX + CURSOR_STEP);
+
+      const cur = document.getElementById('cursorIcon');
+      if (cur) cur.setAttribute('transform', `translate(${645 + cursorX},${81 + cursorY})`);
+
+      if (role === 'click') {
+        const ripple = document.getElementById('clickRipple');
+        if (ripple) {
+          ripple.setAttribute('cx', 645 + cursorX);
+          ripple.setAttribute('cy', 81 + cursorY);
+          ripple.setAttribute('opacity', '1');
+          ripple.setAttribute('r', '4');
+          let r = 4;
+          const anim = setInterval(() => {
+            r += 3;
+            ripple.setAttribute('r', r);
+            ripple.setAttribute('opacity', Math.max(0, 1 - r / 20));
+            if (r > 20) { clearInterval(anim); ripple.setAttribute('opacity', '0'); }
+          }, 30);
+        }
+      }
+    }
+
+    function sendUartByte(bit, role) {
+      const txByte = document.getElementById('txByte');
+      const rxByte = document.getElementById('rxByte');
+      const t1 = document.getElementById('termLine1');
+      const t2 = document.getElementById('termLine2');
+      const t3 = document.getElementById('termLine3');
+      const t4 = document.getElementById('termLine4');
+
+      const hex = '0x' + bit.toString(16).padStart(2, '0').toUpperCase();
+      txByte.textContent = hex;
+      if (t3) t3.textContent = `// TX: ${role} gomb -> tx_data_byte`;
+      if (t1) t1.textContent = `TX > ${hex}`;
+
+      // Simulate the wire delay from PG14 -> connector -> back to PG9 (loopback / partner board echo)
+      setTimeout(() => {
+        flashDockPin('pinIndicatorPG9');
+        rxByte.textContent = hex;
+        if (t2) t2.textContent = `RX < ${hex}`;
+        if (t4) t4.textContent = `// rx_data_byte feldolgozva`;
+      }, 260);
+    }
+
+    function resetSimulation() {
+      setMode('wiring');
+    }
+
+    function initTooltips() {
+      const tooltip = document.getElementById('tooltip');
+      document.querySelectorAll('[data-info]').forEach(el => {
+        el.addEventListener('mousemove', (e) => {
+          tooltip.style.display = 'block';
+          tooltip.textContent = el.getAttribute('data-info');
+          tooltip.style.left = (e.pageX + 15) + 'px';
+          tooltip.style.top = (e.pageY + 15) + 'px';
+        });
+        el.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTooltips();
+      setMode('wiring');
+    });
+  </script>
+</body>
+</html>

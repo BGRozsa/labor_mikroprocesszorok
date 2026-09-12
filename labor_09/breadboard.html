@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Labor 09: STM32 Nucleo & NTC Feszültségosztó Interaktív Bekötés és Szimulátor</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-border: #334155;
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-badge {
+      background: #0284c7;
+      color: white;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      margin-top: 0.15rem;
+    }
+
+    .controls-bar {
+      background: #182234;
+      padding: 0.65rem 2rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #334155;
+      border-color: var(--accent-cyan);
+    }
+
+    .btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: white;
+    }
+
+    .btn-action {
+      background: #059669;
+      border: none;
+      color: white;
+      padding: 0.45rem 1.1rem;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-action:hover {
+      background: #10b981;
+    }
+
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+
+    .btn-small {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.3rem 0.6rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-small:hover {
+      border-color: var(--accent-cyan);
+    }
+
+    .slider-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 0.35rem 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .slider-group input[type="range"] {
+      width: 150px;
+      accent-color: var(--accent-amber);
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      flex: 1;
+      gap: 1.25rem;
+      padding: 1.25rem 2rem;
+      overflow: hidden;
+    }
+
+    .workspace {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .board-svg-wrap {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+      max-height: calc(100vh - 150px);
+    }
+
+    .info-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .info-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* POSITIONS LIST (HTML) */
+    .pos-item {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.6rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .pos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      margin-bottom: 0.3rem;
+    }
+
+    .pos-header.red { color: #fca5a5; }
+    .pos-header.yellow { color: #fde68a; }
+    .pos-header.green { color: #a7f3d0; }
+    .pos-header.blue { color: #bfdbfe; }
+    .pos-header.cyan { color: #a5f3fc; }
+
+    .pos-coord {
+      display: inline-block;
+      background: #1e293b;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 700;
+      color: #38bdf8;
+      margin: 0 0.2rem;
+    }
+
+    .polarity-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .polarity-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+      font-size: 0.8rem;
+    }
+
+    .tag-anode {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .tag-cathode {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border: 1px solid #3b82f6;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .state-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .state-table th {
+      text-align: left;
+      padding: 0.35rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid #334155;
+    }
+
+    .state-table td {
+      padding: 0.4rem 0.35rem;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      background: #475569;
+    }
+
+    .status-dot.on-amber { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+
+    .code-monitor {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #38bdf8;
+      line-height: 1.4;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .hover-tooltip {
+      position: absolute;
+      background: #0f172a;
+      border: 1px solid var(--accent-cyan);
+      color: white;
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      pointer-events: none;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+
+    footer {
+      background: #090d16;
+      border-top: 1px solid var(--card-border);
+      padding: 0.5rem 2rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 1024px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">
+      <span class="header-badge">NTC PRÓBAPANEL BEKÖTÉS</span>
+      <div>
+        <h1>Labor 09: STM32 Nucleo &amp; NTC Feszültségosztó Interaktív Szimulátor</h1>
+        <div class="subtitle">NTC termisztor + 10kΩ osztó (PA3), SSD1306 OLED (I2C2) és HMI kalibráló gombok</div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <a href="README.md" class="btn">📖 Vissza a README-hez</a>
+    </div>
+  </header>
+
+  <div class="controls-bar">
+    <div class="btn-group">
+      <button class="btn active" id="btnModeWiring" onclick="setMode('wiring')">🔍 1. Elhelyezési Nézet</button>
+      <button class="btn" id="btnModeLive" onclick="setMode('live')">🌡️ 2. Élő Kalibráció Szimuláció</button>
+      <button class="btn" id="btnToggleXray" onclick="toggleXray()">🔬 Belső Fémsínek (X-Ray)</button>
+    </div>
+
+    <div class="btn-group" id="liveControls" style="display:none;">
+      <div class="slider-group">
+        <span>🌡️ Vízbe mártva:</span>
+        <input type="range" id="tempSlider" min="-10" max="60" value="22" oninput="onSliderChange(this.value)">
+        <span id="sliderReadout" style="font-family: monospace; font-weight: 700; color: var(--accent-amber);">22 °C</span>
+      </div>
+      <button class="btn-action" id="btnCalibrate" onclick="calibrateZero()">🧊 Kalibrálás (zéruspont)</button>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn" id="btnReset" onclick="resetSimulation()">🔄 Alaphelyzet</button>
+    </div>
+  </div>
+
+  <div class="app-container">
+
+    <div class="workspace" id="workspace">
+      <div class="hover-tooltip" id="tooltip"></div>
+
+      <div class="board-svg-wrap">
+        <svg id="breadboardSvg" viewBox="0 0 680 620" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="glowAmber" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+
+          <!-- ================= BREADBOARD ================= -->
+          <g id="breadboard" transform="translate(30, 20)">
+            <!-- Breadboard Body -->
+            <rect x="0" y="0" width="620" height="380" rx="10" fill="#fafaf9" stroke="#d6d3d1" stroke-width="2"/>
+            <!-- Center Divider -->
+            <rect x="20" y="180" width="580" height="20" fill="#e7e5e4" stroke="#d6d3d1" stroke-width="1"/>
+            <text x="310" y="194" font-size="9" font-weight="700" fill="#a8a29e" text-anchor="middle" letter-spacing="1">KÖZÉPSŐ VÁJAT</text>
+
+            <!-- Top Power Rails -->
+            <line x1="30" y1="28" x2="590" y2="28" stroke="#3b82f6" stroke-width="2"/>
+            <text x="18" y="32" font-size="14" font-weight="900" fill="#3b82f6" text-anchor="middle">-</text>
+            <text x="602" y="32" font-size="14" font-weight="900" fill="#3b82f6" text-anchor="middle">-</text>
+
+            <line x1="30" y1="52" x2="590" y2="52" stroke="#ef4444" stroke-width="2"/>
+            <text x="18" y="56" font-size="14" font-weight="900" fill="#ef4444" text-anchor="middle">+</text>
+            <text x="602" y="56" font-size="14" font-weight="900" fill="#ef4444" text-anchor="middle">+</text>
+
+            <!-- Bottom Power Rails -->
+            <line x1="30" y1="328" x2="590" y2="328" stroke="#3b82f6" stroke-width="2"/>
+            <text x="18" y="332" font-size="14" font-weight="900" fill="#3b82f6" text-anchor="middle">-</text>
+            <text x="602" y="332" font-size="14" font-weight="900" fill="#3b82f6" text-anchor="middle">-</text>
+
+            <line x1="30" y1="352" x2="590" y2="352" stroke="#ef4444" stroke-width="2"/>
+            <text x="18" y="356" font-size="14" font-weight="900" fill="#ef4444" text-anchor="middle">+</text>
+            <text x="602" y="356" font-size="14" font-weight="900" fill="#ef4444" text-anchor="middle">+</text>
+
+            <!-- Row Letters -->
+            <g font-size="10" font-weight="700" fill="#78716c" text-anchor="middle" font-family="monospace">
+              <text x="30" y="78">a</text><text x="30" y="98">b</text><text x="30" y="118">c</text><text x="30" y="138">d</text><text x="30" y="158">e</text>
+              <text x="30" y="228">f</text><text x="30" y="248">g</text><text x="30" y="268">h</text><text x="30" y="288">i</text><text x="30" y="308">j</text>
+              <text x="590" y="78">a</text><text x="590" y="98">b</text><text x="590" y="118">c</text><text x="590" y="138">d</text><text x="590" y="158">e</text>
+              <text x="590" y="228">f</text><text x="590" y="248">g</text><text x="590" y="268">h</text><text x="590" y="288">i</text><text x="590" y="308">j</text>
+            </g>
+
+            <!-- X-Ray Internal conductors (toggled) -->
+            <g id="xrayConductors" opacity="0" style="transition: opacity 0.25s ease;">
+              <rect x="30" y="25" width="560" height="6" fill="#38bdf8" opacity="0.3"/>
+              <rect x="30" y="49" width="560" height="6" fill="#f87171" opacity="0.3"/>
+              <g fill="#fbbf24" opacity="0.3">
+                <rect x="108" y="73" width="6" height="85" rx="2"/>
+                <rect x="127" y="73" width="6" height="85" rx="2"/>
+                <rect x="146" y="73" width="6" height="85" rx="2"/>
+                <rect x="165" y="73" width="6" height="85" rx="2"/>
+                <rect x="260" y="73" width="6" height="85" rx="2"/>
+                <rect x="279" y="73" width="6" height="85" rx="2"/>
+                <rect x="374" y="73" width="6" height="85" rx="2"/>
+                <rect x="393" y="73" width="6" height="85" rx="2"/>
+                <rect x="412" y="73" width="6" height="85" rx="2"/>
+                <rect x="431" y="73" width="6" height="85" rx="2"/>
+                <rect x="450" y="73" width="6" height="85" rx="2"/>
+              </g>
+            </g>
+
+            <!-- Breadboard Holes Grid -->
+            <g id="breadboardHoles" fill="#1c1917">
+              <!-- Rendered via JS -->
+            </g>
+
+            <!-- ================= SSD1306 OLED (I2C2) ================= -->
+            <g class="comp-module" data-info="SSD1306 I2C OLED kijelző modul — 4 lábas fejléc: VCC, GND, SDA, SCL">
+              <rect x="97" y="58" width="86" height="42" rx="5" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.6"/>
+              <text x="140" y="74" font-size="10.5" font-weight="900" fill="#7dd3fc" text-anchor="middle">SSD1306</text>
+              <text x="140" y="88" font-size="8" font-weight="700" fill="#bae6fd" text-anchor="middle">OLED (I2C2)</text>
+
+              <line x1="111" y1="52" x2="111" y2="58" stroke="#ef4444" stroke-width="2.2"/>
+              <circle cx="111" cy="52" r="3" fill="#ef4444"/>
+              <line x1="130" y1="28" x2="130" y2="58" stroke="#3b82f6" stroke-width="2.2"/>
+              <circle cx="130" cy="28" r="3" fill="#3b82f6"/>
+
+              <line x1="111" y1="100" x2="111" y2="115" stroke="#ef4444" stroke-width="2.2"/>
+              <line x1="130" y1="100" x2="130" y2="115" stroke="#3b82f6" stroke-width="2.2"/>
+              <line x1="149" y1="100" x2="149" y2="115" stroke="#f59e0b" stroke-width="2.2"/>
+              <line x1="168" y1="100" x2="168" y2="115" stroke="#10b981" stroke-width="2.2"/>
+              <circle cx="111" cy="115" r="3.5" fill="#ef4444" data-info="OLED VCC — Piros (+) 3.3V sín, 4. oszlop"/>
+              <circle cx="130" cy="115" r="3.5" fill="#3b82f6" data-info="OLED GND — Kék (-) sín, 5. oszlop"/>
+              <circle cx="149" cy="115" r="3.5" fill="#f59e0b" data-info="OLED SDA — STM32 PF0 (I2C2_SDA), 6. oszlop"/>
+              <circle cx="168" cy="115" r="3.5" fill="#10b981" data-info="OLED SCL — STM32 PF1 (I2C2_SCL), 7. oszlop"/>
+            </g>
+
+            <!-- ================= NTC + R2 VOLTAGE DIVIDER ================= -->
+            <!-- NTC (top, to +3.3V) -->
+            <g data-info="NTC termisztor (Vishay NTCLE400E3103H, R25=10kΩ, B=3977K) — a feszültségosztó FELSŐ tagja, 3.3V-ra kötve">
+              <line x1="282" y1="52" x2="282" y2="75" stroke="#57534e" stroke-width="2.2"/>
+              <line x1="282" y1="95" x2="282" y2="115" stroke="#57534e" stroke-width="2.2"/>
+              <circle cx="282" cy="52" r="3" fill="#ef4444"/>
+              <circle id="ntcBead" cx="282" cy="85" r="11" fill="#f97316" stroke="#c2410c" stroke-width="1.6"/>
+              <text x="282" y="35" font-size="8.5" font-weight="900" fill="#c2410c" text-anchor="middle">NTC</text>
+            </g>
+
+            <!-- Node: PA3 measurement point -->
+            <circle id="nodePA3" cx="282" cy="115" r="4.5" fill="#facc15" stroke="#a16207" stroke-width="1.5" data-info="Feszültségosztó középpont — STM32 PA3 (ADC1_IN3, GPIO_Label: SEN), 13. oszlop"/>
+
+            <!-- R2 (bottom, to GND) — bent lead to avoid overlapping the NTC line -->
+            <g data-info="R2 — precíziós 10kΩ fémréteg referencia-ellenállás — a feszültségosztó ALSÓ tagja, GND-re kötve">
+              <path d="M282,115 L282,135 L263,135 L263,60" fill="none" stroke="#b45309" stroke-width="2.2"/>
+              <line x1="263" y1="28" x2="263" y2="60" stroke="#b45309" stroke-width="2.2"/>
+              <rect x="256" y="55" width="14" height="26" rx="3" fill="#fef3c7" stroke="#b45309" stroke-width="1.2"/>
+              <line x1="256" y1="61" x2="270" y2="61" stroke="#dc2626" stroke-width="2"/>
+              <line x1="256" y1="67" x2="270" y2="67" stroke="#78350f" stroke-width="2"/>
+              <line x1="256" y1="73" x2="270" y2="73" stroke="#dc2626" stroke-width="2"/>
+              <circle cx="263" cy="28" r="3" fill="#3b82f6"/>
+              <text x="248" y="45" font-size="8.5" font-weight="900" fill="#b45309" text-anchor="middle">R2</text>
+            </g>
+
+            <!-- ================= HMI GOMBPANEL (BTN1-5) ================= -->
+            <g class="comp-module" data-info="HMI gombpanel — 5 nyomógomb az állapotgép vezérléséhez (BTN1-BTN5)">
+              <rect x="363" y="58" width="104" height="42" rx="5" fill="#312e81" stroke="#a78bfa" stroke-width="1.6"/>
+              <text x="415" y="74" font-size="10" font-weight="900" fill="#c4b5fd" text-anchor="middle">HMI Gombpanel</text>
+              <text x="415" y="88" font-size="8" font-weight="700" fill="#ddd6fe" text-anchor="middle">(BTN1 – BTN5)</text>
+
+              <line x1="415" y1="52" x2="415" y2="58" stroke="#ef4444" stroke-width="2.2"/>
+              <circle cx="415" cy="52" r="3" fill="#ef4444"/>
+
+              <line x1="377" y1="100" x2="377" y2="115" stroke="#a78bfa" stroke-width="2.2"/>
+              <line x1="396" y1="100" x2="396" y2="115" stroke="#a78bfa" stroke-width="2.2"/>
+              <line x1="415" y1="100" x2="415" y2="115" stroke="#f59e0b" stroke-width="2.4"/>
+              <line x1="434" y1="100" x2="434" y2="115" stroke="#a78bfa" stroke-width="2.2"/>
+              <line x1="453" y1="100" x2="453" y2="115" stroke="#a78bfa" stroke-width="2.2"/>
+
+              <circle cx="377" cy="115" r="3.5" fill="#a78bfa" data-info="BTN2 — PE2 — Megjelenítési mód: BAL / vissza (18. oszlop)"/>
+              <circle cx="396" cy="115" r="3.5" fill="#a78bfa" data-info="BTN1 — PE5 — Képernyőváltás: FEL, SCRN_Start ⇄ SCRN_ADC (19. oszlop)"/>
+              <circle id="btn3pin" cx="415" cy="115" r="4" fill="#f59e0b" data-info="BTN3 — PE3 — KÖZÉPSŐ gomb: kalibráció indítása (DM_Temp módban) / korrekció törlése (DM_Diff módban) (20. oszlop)"/>
+              <circle cx="434" cy="115" r="3.5" fill="#a78bfa" data-info="BTN5 — PE4 — Képernyőváltás: LE (21. oszlop)"/>
+              <circle cx="453" cy="115" r="3.5" fill="#a78bfa" data-info="BTN4 — PE6 — Megjelenítési mód: JOBB / tovább (22. oszlop)"/>
+            </g>
+          </g>
+
+          <!-- ================= WIRES FROM NUCLEO (BOTTOM DOCK) ================= -->
+          <path d="M 60,490 L 60,28" fill="none" stroke="#3b82f6" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="60" cy="28" r="4.5" fill="#1d4ed8"/>
+
+          <path d="M 140,490 L 140,115 L 149,115" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="149" cy="115" r="4.5" fill="#d97706"/>
+
+          <path d="M 230,490 L 230,115 L 168,115" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="168" cy="115" r="4.5" fill="#059669"/>
+
+          <path d="M 325,490 L 325,115 L 312,115" fill="none" stroke="#eab308" stroke-width="3.5" stroke-linecap="round"/>
+
+          <path d="M 395,490 L 395,115 L 377,115" fill="none" stroke="#a78bfa" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M 415,490 L 415,115 L 396,115" fill="none" stroke="#a78bfa" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M 435,490 L 435,115 L 415,115" fill="none" stroke="#f59e0b" stroke-width="2.8" stroke-linecap="round"/>
+          <path d="M 455,490 L 455,115 L 434,115" fill="none" stroke="#a78bfa" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M 475,490 L 475,115 L 453,115" fill="none" stroke="#a78bfa" stroke-width="2.6" stroke-linecap="round"/>
+
+          <path d="M 605,490 L 605,52" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="605" cy="52" r="4.5" fill="#b91c1c"/>
+
+          <!-- ================= STM32 DOCK (BOTTOM) ================= -->
+          <g transform="translate(20, 490)">
+            <rect x="0" y="0" width="640" height="110" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+            <rect x="0" y="0" width="640" height="24" rx="8" fill="#1e293b"/>
+            <text x="15" y="16" font-size="11" font-weight="800" fill="#38bdf8">STM32 NUCLEO CSATLAKOZÓK</text>
+
+            <!-- GND -->
+            <g transform="translate(10, 36)">
+              <rect x="0" y="0" width="60" height="58" rx="6" fill="#1e293b"/>
+              <circle cx="30" cy="20" r="6" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
+              <text x="30" y="40" font-size="10.5" font-weight="900" fill="#f8fafc" text-anchor="middle">GND</text>
+              <text x="30" y="52" font-size="7.5" fill="#94a3b8" text-anchor="middle">Kék sín (-)</text>
+            </g>
+
+            <!-- PF0 SDA -->
+            <g transform="translate(80, 36)" data-info="STM32 PF0 — I2C2_SDA (OLED)">
+              <rect x="0" y="0" width="80" height="58" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2"/>
+              <circle cx="40" cy="20" r="6" fill="#475569"/>
+              <text x="40" y="40" font-size="10.5" font-weight="900" fill="#fde68a" text-anchor="middle">PF0</text>
+              <text x="40" y="52" font-size="7.5" font-weight="700" fill="#f59e0b" text-anchor="middle">I2C2_SDA</text>
+            </g>
+
+            <!-- PF1 SCL -->
+            <g transform="translate(170, 36)" data-info="STM32 PF1 — I2C2_SCL (OLED)">
+              <rect x="0" y="0" width="80" height="58" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.2"/>
+              <circle cx="40" cy="20" r="6" fill="#475569"/>
+              <text x="40" y="40" font-size="10.5" font-weight="900" fill="#a7f3d0" text-anchor="middle">PF1</text>
+              <text x="40" y="52" font-size="7.5" font-weight="700" fill="#10b981" text-anchor="middle">I2C2_SCL</text>
+            </g>
+
+            <!-- PA3 SEN -->
+            <g transform="translate(260, 36)" data-info="STM32 PA3 — ADC1_IN3, GPIO_Label: SEN — a feszültségosztó mérőpontja">
+              <rect x="0" y="0" width="90" height="58" rx="6" fill="#1e293b" stroke="#eab308" stroke-width="1.4"/>
+              <circle cx="45" cy="20" r="6" id="pinIndicatorPA3" fill="#475569"/>
+              <text x="45" y="40" font-size="10.5" font-weight="900" fill="#fde047" text-anchor="middle">PA3</text>
+              <text x="45" y="52" font-size="7.5" font-weight="700" fill="#eab308" text-anchor="middle">SEN (ADC1_IN3)</text>
+            </g>
+
+            <!-- HMI Buttons combined -->
+            <g transform="translate(360, 36)" data-info="HMI gombpanel STM32 lábai: PE2, PE5, PE3 (kalibráció), PE4, PE6">
+              <rect x="0" y="0" width="180" height="58" rx="6" fill="#1e293b" stroke="#a78bfa" stroke-width="1.2"/>
+              <text x="90" y="14" font-size="8.5" font-weight="800" fill="#c4b5fd" text-anchor="middle">HMI GOMBOK</text>
+              <circle cx="35" cy="30" r="4.5" fill="#475569"/>
+              <circle cx="75" cy="30" r="4.5" fill="#475569"/>
+              <circle id="pinIndicatorPE3" cx="115" cy="30" r="5" fill="#475569"/>
+              <circle cx="155" cy="30" r="4.5" fill="#475569"/>
+              <text x="35" y="50" font-size="7.5" font-weight="700" fill="#ddd6fe" text-anchor="middle">PE2</text>
+              <text x="75" y="50" font-size="7.5" font-weight="700" fill="#ddd6fe" text-anchor="middle">PE5</text>
+              <text x="115" y="50" font-size="7.5" font-weight="800" fill="#fde68a" text-anchor="middle">PE3★</text>
+              <text x="155" y="50" font-size="7.5" font-weight="700" fill="#ddd6fe" text-anchor="middle">PE4/PE6</text>
+            </g>
+
+            <!-- 3V3 -->
+            <g transform="translate(550, 36)">
+              <rect x="0" y="0" width="70" height="58" rx="6" fill="#1e293b"/>
+              <circle cx="35" cy="20" r="6" fill="#ef4444"/>
+              <text x="35" y="40" font-size="10.5" font-weight="900" fill="#fca5a5" text-anchor="middle">+3.3V</text>
+              <text x="35" y="52" font-size="7.5" fill="#94a3b8" text-anchor="middle">Piros sín (+)</text>
+            </g>
+          </g>
+
+        </svg>
+      </div>
+    </div>
+
+    <!-- SIDEBAR WITH CLEAR HTML CARDS -->
+    <div class="sidebar">
+
+      <!-- CARD 1: PONTOS POZÍCIÓK -->
+      <div class="info-card">
+        <h3>📍 Pontos Alkatrész-Pozíciók</h3>
+
+        <div class="pos-item">
+          <div class="pos-header yellow">
+            <span>NTC + R2 (feszültségosztó)</span>
+            <span>STM32 PA3 (SEN)</span>
+          </div>
+          <div>• NTC felső láb: <span class="pos-coord">13. oszlop</span> → Piros (+) 3.3V sín</div>
+          <div>• Osztó középpont: <span class="pos-coord">13. oszlop, c sor</span> → <b>PA3</b> (ADC1_IN3)</div>
+          <div>• R2 (10kΩ) alsó láb: <span class="pos-coord">12. oszlop</span> → Kék (-) GND sín</div>
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header cyan">
+            <span>SSD1306 OLED</span>
+            <span>I2C2 (PF0/PF1)</span>
+          </div>
+          <div>• VCC: <span class="pos-coord">4. oszlop</span> → Piros (+) 3.3V sín</div>
+          <div>• GND: <span class="pos-coord">5. oszlop</span> → Kék (-) GND sín</div>
+          <div>• SDA: <span class="pos-coord">6. oszlop</span> → PF0</div>
+          <div>• SCL: <span class="pos-coord">7. oszlop</span> → PF1</div>
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header green">
+            <span>HMI Gombpanel</span>
+            <span>PE2, PE3★, PE4, PE5, PE6</span>
+          </div>
+          <div>• BTN2 (bal): <span class="pos-coord">18. oszlop</span> → PE2</div>
+          <div>• BTN1 (fel): <span class="pos-coord">19. oszlop</span> → PE5</div>
+          <div>• BTN3 (közép, <b>kalibráció</b>): <span class="pos-coord">20. oszlop</span> → PE3</div>
+          <div>• BTN5 (le): <span class="pos-coord">21. oszlop</span> → PE4</div>
+          <div>• BTN4 (jobb): <span class="pos-coord">22. oszlop</span> → PE6</div>
+        </div>
+      </div>
+
+      <!-- CARD 2: DIVIDER GUIDE -->
+      <div class="info-card">
+        <h3>🧮 Feszültségosztó Iránya</h3>
+        <div class="polarity-box">
+          <div class="polarity-row">
+            <span class="tag-anode">NTC (R1)</span>
+            <span>Felül — 3.3V felé</span>
+          </div>
+          <div class="polarity-row">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Melegedéskor:</span>
+            <span style="font-size: 0.78rem; color: var(--accent-amber);">ellenállása csökken</span>
+          </div>
+        </div>
+        <div class="polarity-box">
+          <div class="polarity-row">
+            <span class="tag-cathode">R2 (10kΩ)</span>
+            <span>Alul — GND felé</span>
+          </div>
+          <div class="polarity-row">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Referencia:</span>
+            <span style="font-size: 0.78rem; color: var(--accent-cyan);">precíziós, 1%</span>
+          </div>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
+          🧭 Az osztó középpontja adja a <code>PA3</code> mérőfeszültséget: <code>R1 = (4095/ADC − 1) · 10 000 Ω</code>.
+        </div>
+      </div>
+
+      <!-- CARD 3: LIVE STATE TABLE -->
+      <div class="info-card">
+        <h3>🗺️ Élő Mérés &amp; Kalibráció</h3>
+        <table class="state-table">
+          <thead>
+            <tr>
+              <th>Kijelzési mód</th>
+              <th>Érték</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="status-dot" id="dotAdc"></span> Nyers ADC (DM_ConvRes)</td><td id="valAdcRaw">—</td></tr>
+            <tr><td><span class="status-dot" id="dotTemp"></span> Hőmérséklet (DM_Temp)</td><td id="valTempCorrected">—</td></tr>
+            <tr><td><span class="status-dot" id="dotDiff"></span> Eltolás (DM_Diff)</td><td id="valOffset">—</td></tr>
+          </tbody>
+        </table>
+        <div class="btn-group" style="margin-top: 0.6rem;">
+          <button class="btn-small" onclick="setPreset(0)">🧊 Jégvíz 0°C</button>
+          <button class="btn-small" onclick="setPreset(22)">🏠 Szoba 22°C</button>
+          <button class="btn-small" onclick="setPreset(45)">🔥 Meleg 45°C</button>
+          <button class="btn-small" onclick="clearCorrection()">🧹 Korrekció törlése</button>
+        </div>
+      </div>
+
+      <!-- CARD 4: CODE MONITOR -->
+      <div class="info-card">
+        <h3>💻 Élő main.c Kódkövető</h3>
+        <div class="code-monitor" id="codeMonitor">
+          <span style="color:#64748b;">// Válassz szimulációs módot a fenti gombokkal!</span><br>
+          <span style="color:#f43f5e; font-weight:bold;">while</span> (1) {<br>
+          &nbsp;&nbsp;<span id="codeTraceText">HAL_Delay(500);</span><br>
+          }
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <div>Sapientia EMTE — Mikrokontrollerek és Beágyazott Rendszerek Laboratórium (Labor 09)</div>
+    <div>Hardver: STM32 Nucleo-F446ZE | Szoftver: STM32CubeIDE (HAL, ADC1_IN3)</div>
+  </footer>
+
+  <script>
+    let currentMode = 'wiring';
+    let isXrayOn = false;
+    let liveInterval = null;
+
+    // NTC model constants (already-verified facts from the README/TANARI guide)
+    const R25 = 10000;
+    const B_COEFF = 3977;
+    const T25_K = 25 + 273.15;
+    const VDD = 3.3;
+    const R2_OHM = 10000;
+
+    let simAmbientC = 22;      // simulated temperature the thermistor is dipped into
+    let calibrationOffset = 0; // temperature_correction
+
+    function initHoles() {
+      const container = document.getElementById('breadboardHoles');
+      if (!container) return;
+      let s = '';
+
+      for (let c = 1; c <= 30; c++) {
+        const cx = 35 + c * 19;
+        s += `<circle cx="${cx}" cy="28" r="2.2"/>`;
+        s += `<circle cx="${cx}" cy="52" r="2.2"/>`;
+        s += `<circle cx="${cx}" cy="328" r="2.2"/>`;
+        s += `<circle cx="${cx}" cy="352" r="2.2"/>`;
+
+        [75, 95, 115, 135, 155].forEach(y => s += `<circle cx="${cx}" cy="${y}" r="2.2"/>`);
+        [225, 245, 265, 285, 305].forEach(y => s += `<circle cx="${cx}" cy="${y}" r="2.2"/>`);
+
+        if ([1, 5, 10, 15, 20, 25, 30].includes(c)) {
+          s += `<text x="${cx}" y="67" font-size="8.5" font-weight="700" fill="#78716c" text-anchor="middle" font-family="monospace">${c}</text>`;
+          s += `<text x="${cx}" y="217" font-size="8.5" font-weight="700" fill="#78716c" text-anchor="middle" font-family="monospace">${c}</text>`;
+        }
+      }
+      container.innerHTML = s;
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      clearInterval(liveInterval);
+      liveInterval = null;
+
+      document.getElementById('btnModeWiring').classList.toggle('active', mode === 'wiring');
+      document.getElementById('btnModeLive').classList.toggle('active', mode === 'live');
+      document.getElementById('liveControls').style.display = (mode === 'live') ? 'flex' : 'none';
+
+      const monitor = document.getElementById('codeTraceText');
+      const ntcBead = document.getElementById('ntcBead');
+
+      if (mode === 'wiring') {
+        if (ntcBead) ntcBead.removeAttribute('filter');
+        document.getElementById('valAdcRaw').textContent = '—';
+        document.getElementById('valTempCorrected').textContent = '—';
+        document.getElementById('valOffset').textContent = '—';
+        ['dotAdc', 'dotTemp', 'dotDiff'].forEach(id => document.getElementById(id).className = 'status-dot');
+        monitor.innerHTML = `<span style="color:#64748b;">// Előkészület: ADC1 (PA3/ADC1_IN3) és I2C2 (OLED) ellenőrzése</span><br>MX_ADC1_Init();`;
+      } else if (mode === 'live') {
+        if (ntcBead) ntcBead.setAttribute('filter', 'url(#glowAmber)');
+        ['dotAdc', 'dotTemp', 'dotDiff'].forEach(id => document.getElementById(id).className = 'status-dot on-amber');
+        liveInterval = setInterval(tickSimulation, 400);
+        tickSimulation();
+      }
+    }
+
+    // NTC resistance from temperature via the B-parameter model (already described in the guide)
+    function ntcResistanceAt(tempC) {
+      const T_K = tempC + 273.15;
+      return R25 * Math.exp(B_COEFF * (1 / T_K - 1 / T25_K));
+    }
+
+    // Inverse of the B-parameter model: temperature from a measured resistance
+    function temperatureFromResistance(r) {
+      const invT = (1 / T25_K) + (1 / B_COEFF) * Math.log(r / R25);
+      return (1 / invT) - 273.15;
+    }
+
+    function tickSimulation() {
+      // 1) physical model: NTC resistance at the simulated dip temperature
+      const rNtc = ntcResistanceAt(simAmbientC);
+
+      // 2) voltage divider: NTC on top (VDD), R2 on bottom (GND) -> Vout at the node
+      const vOut = VDD * (R2_OHM / (rNtc + R2_OHM));
+
+      // 3) 12-bit ADC sampling of the node voltage (some sampling noise for realism)
+      let adcRaw = Math.round((vOut / VDD) * 4095 + (Math.random() - 0.5) * 3);
+      adcRaw = Math.min(4095, Math.max(1, adcRaw));
+
+      // 4) same reconstruction formula as the README: R1 = (4095/ADC - 1) * 10000
+      const r1Calc = (4095 / adcRaw - 1) * R2_OHM;
+      const tempCalculated = temperatureFromResistance(r1Calc);
+      const tempCorrected = tempCalculated + calibrationOffset;
+
+      document.getElementById('valAdcRaw').textContent = adcRaw;
+      document.getElementById('valTempCorrected').textContent = tempCorrected.toFixed(1) + ' °C';
+      document.getElementById('valOffset').textContent = (calibrationOffset >= 0 ? '+' : '') + calibrationOffset.toFixed(1) + ' °C';
+
+      window._lastTempCalculated = tempCalculated;
+      updateCodeMonitor(adcRaw, tempCalculated, tempCorrected);
+    }
+
+    function onSliderChange(val) {
+      simAmbientC = parseFloat(val);
+      document.getElementById('sliderReadout').textContent = simAmbientC + ' °C';
+    }
+
+    function setPreset(val) {
+      simAmbientC = val;
+      document.getElementById('tempSlider').value = val;
+      document.getElementById('sliderReadout').textContent = val + ' °C';
+      if (currentMode !== 'live') setMode('live');
+    }
+
+    function calibrateZero() {
+      // mirrors the DM_Temp + BTN3 action: temperature_correction = 0 - temperature_calculated
+      if (currentMode !== 'live') setMode('live');
+      const t = (typeof window._lastTempCalculated === 'number') ? window._lastTempCalculated : 0;
+      calibrationOffset = 0 - t;
+      tickSimulation();
+    }
+
+    function clearCorrection() {
+      // mirrors the DM_Diff + BTN3 action: temperature_correction = 0
+      calibrationOffset = 0;
+      if (currentMode === 'live') tickSimulation();
+      document.getElementById('valOffset').textContent = '0.0 °C';
+    }
+
+    function updateCodeMonitor(adcRaw, tempCalculated, tempCorrected) {
+      const monitor = document.getElementById('codeTraceText');
+      if (currentMode !== 'live') return;
+      monitor.innerHTML = `<span style="color:#64748b;">// ConvertAndDisplay(): SAMPLE_NUMBER db mérés átlagolása</span><br>
+      adc_result = ${adcRaw}; <span style="color:#64748b;">// HAL_ADC_GetValue(&amp;hadc1)</span><br>
+      temperature_calculated = CalculateTemperature(adc_result); <span style="color:#64748b;">// ${tempCalculated.toFixed(1)} °C</span><br>
+      temperature = temperature_calculated + temperature_correction; <span style="color:#64748b;">// ${tempCorrected.toFixed(1)} °C</span>`;
+    }
+
+    function toggleXray() {
+      isXrayOn = !isXrayOn;
+      const xray = document.getElementById('xrayConductors');
+      const btn = document.getElementById('btnToggleXray');
+      if (xray) xray.style.opacity = isXrayOn ? '1' : '0';
+      if (btn) btn.classList.toggle('active', isXrayOn);
+    }
+
+    function resetSimulation() {
+      simAmbientC = 22;
+      calibrationOffset = 0;
+      document.getElementById('tempSlider').value = 22;
+      document.getElementById('sliderReadout').textContent = '22 °C';
+      setMode('wiring');
+    }
+
+    function initTooltips() {
+      const tooltip = document.getElementById('tooltip');
+      document.querySelectorAll('[data-info]').forEach(el => {
+        el.addEventListener('mousemove', (e) => {
+          tooltip.style.display = 'block';
+          tooltip.textContent = el.getAttribute('data-info');
+          tooltip.style.left = (e.pageX + 15) + 'px';
+          tooltip.style.top = (e.pageY + 15) + 'px';
+        });
+        el.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initHoles();
+      initTooltips();
+      setMode('wiring');
+    });
+  </script>
+</body>
+</html>

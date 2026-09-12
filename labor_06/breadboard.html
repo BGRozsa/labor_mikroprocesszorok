@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Labor 06: STM32 Nucleo & Breadboard Interaktív Bekötés és Szimulátor</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-border: #334155;
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-badge {
+      background: #0284c7;
+      color: white;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      margin-top: 0.15rem;
+    }
+
+    .controls-bar {
+      background: #182234;
+      padding: 0.65rem 2rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #334155;
+      border-color: var(--accent-cyan);
+    }
+
+    .btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: white;
+    }
+
+    .btn-action {
+      background: #059669;
+      border: none;
+      color: white;
+      padding: 0.45rem 1.1rem;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-action:hover {
+      background: #10b981;
+    }
+
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+
+    .btn-mini {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      width: 1.9rem;
+      height: 1.9rem;
+      font-size: 1rem;
+      font-weight: 800;
+      border-radius: 6px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .btn-mini:hover {
+      background: #334155;
+      border-color: var(--accent-cyan);
+    }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      flex: 1;
+      gap: 1.25rem;
+      padding: 1.25rem 2rem;
+      overflow: hidden;
+    }
+
+    .workspace {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .board-svg-wrap {
+      width: 100%;
+      max-width: 720px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+      max-height: calc(100vh - 150px);
+    }
+
+    .info-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .info-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* POSITIONS LIST (HTML) */
+    .pos-item {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.6rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .pos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      margin-bottom: 0.3rem;
+    }
+
+    .pos-header.red { color: #fca5a5; }
+    .pos-header.yellow { color: #fde68a; }
+    .pos-header.green { color: #a7f3d0; }
+    .pos-header.blue { color: #bfdbfe; }
+    .pos-header.cyan { color: #a5f3fc; }
+
+    .pos-coord {
+      display: inline-block;
+      background: #1e293b;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 700;
+      color: #38bdf8;
+      margin: 0 0.2rem;
+    }
+
+    .polarity-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .polarity-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+      font-size: 0.8rem;
+    }
+
+    .tag-anode {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .tag-cathode {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border: 1px solid #3b82f6;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .tag-wiper {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+      border: 1px solid #f59e0b;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    .state-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .state-table th {
+      text-align: left;
+      padding: 0.35rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid #334155;
+    }
+
+    .state-table td {
+      padding: 0.4rem 0.35rem;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      background: #475569;
+    }
+
+    .status-dot.on-amber { background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+
+    .code-monitor {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #38bdf8;
+      line-height: 1.4;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .hover-tooltip {
+      position: absolute;
+      background: #0f172a;
+      border: 1px solid var(--accent-cyan);
+      color: white;
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      pointer-events: none;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+
+    input[type="range"] {
+      width: 140px;
+      accent-color: var(--accent-cyan);
+    }
+
+    footer {
+      background: #090d16;
+      border-top: 1px solid var(--card-border);
+      padding: 0.5rem 2rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 1024px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">
+      <span class="header-badge">PRÓBAPANEL BEKÖTÉS</span>
+      <div>
+        <h1>Labor 06: STM32 Nucleo &amp; Breadboard Interaktív Szimulátor</h1>
+        <div class="subtitle">Forgó potenciométer (HMI_POT) bekötése PC0 / ADC1_IN10-re &amp; élő 12 bites ADC leolvasás szimuláció</div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <a href="README.md" class="btn">📖 Vissza a README-hez</a>
+    </div>
+  </header>
+
+  <div class="controls-bar">
+    <div class="btn-group">
+      <button class="btn active" id="btnModeWiring" onclick="setMode('wiring')">🔍 1. Elhelyezési Nézet</button>
+      <button class="btn" id="btnModePolling" onclick="setMode('polling')">📟 2. Polling Szimuláció</button>
+      <button class="btn" id="btnModeInterrupt" onclick="setMode('interrupt')">⚡ 3. Interrupt + Átlagolás</button>
+      <button class="btn" id="btnToggleXray" onclick="toggleXray()">🔬 Belső Fémsínek (X-Ray)</button>
+    </div>
+
+    <div class="btn-group">
+      <span id="potControls" style="display:none; align-items:center; gap:0.5rem;">
+        <span style="font-size:0.8rem; color: var(--text-muted);">Wiper pozíció:</span>
+        <button class="btn-mini" onclick="nudgePot(-64)">−</button>
+        <input type="range" id="potSlider" min="0" max="4095" step="1" value="2048" oninput="applyPot(this.value)">
+        <button class="btn-mini" onclick="nudgePot(64)">+</button>
+      </span>
+      <button class="btn" id="btnReset" onclick="resetSimulation()">🔄 Alaphelyzet</button>
+    </div>
+  </div>
+
+  <div class="app-container">
+
+    <div class="workspace" id="workspace">
+      <div class="hover-tooltip" id="tooltip"></div>
+
+      <div class="board-svg-wrap">
+        <svg id="breadboardSvg" viewBox="0 0 680 620" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+
+          <!-- ================= BREADBOARD ================= -->
+          <g id="breadboard" transform="translate(30, 20)">
+            <!-- Breadboard Body -->
+            <rect x="0" y="0" width="620" height="380" rx="10" fill="#fafaf9" stroke="#d6d3d1" stroke-width="2"/>
+            <!-- Center Divider -->
+            <rect x="20" y="180" width="580" height="20" fill="#e7e5e4" stroke="#d6d3d1" stroke-width="1"/>
+            <text x="310" y="194" font-size="9" font-weight="700" fill="#a8a29e" text-anchor="middle" letter-spacing="1">KÖZÉPSŐ VÁJAT</text>
+
+            <!-- Top Power Rails -->
+            <line x1="30" y1="28" x2="590" y2="28" stroke="#3b82f6" stroke-width="2"/>
+            <text x="18" y="32" font-size="14" font-weight="900" fill="#3b82f6" text-anchor="middle">-</text>
+            <text x="602" y="32" font-size="14" font-weight="900" fill="#3b82f6" text-anchor="middle">-</text>
+
+            <line x1="30" y1="52" x2="590" y2="52" stroke="#ef4444" stroke-width="2"/>
+            <text x="18" y="56" font-size="14" font-weight="900" fill="#ef4444" text-anchor="middle">+</text>
+            <text x="602" y="56" font-size="14" font-weight="900" fill="#ef4444" text-anchor="middle">+</text>
+
+            <!-- Bottom Power Rails -->
+            <line x1="30" y1="328" x2="590" y2="328" stroke="#3b82f6" stroke-width="2"/>
+            <text x="18" y="332" font-size="14" font-weight="900" fill="#3b82f6" text-anchor="middle">-</text>
+            <text x="602" y="332" font-size="14" font-weight="900" fill="#3b82f6" text-anchor="middle">-</text>
+
+            <line x1="30" y1="352" x2="590" y2="352" stroke="#ef4444" stroke-width="2"/>
+            <text x="18" y="356" font-size="14" font-weight="900" fill="#ef4444" text-anchor="middle">+</text>
+            <text x="602" y="356" font-size="14" font-weight="900" fill="#ef4444" text-anchor="middle">+</text>
+
+            <!-- Row Letters -->
+            <g font-size="10" font-weight="700" fill="#78716c" text-anchor="middle" font-family="monospace">
+              <text x="30" y="78">a</text><text x="30" y="98">b</text><text x="30" y="118">c</text><text x="30" y="138">d</text><text x="30" y="158">e</text>
+              <text x="30" y="228">f</text><text x="30" y="248">g</text><text x="30" y="268">h</text><text x="30" y="288">i</text><text x="30" y="308">j</text>
+              <text x="590" y="78">a</text><text x="590" y="98">b</text><text x="590" y="118">c</text><text x="590" y="138">d</text><text x="590" y="158">e</text>
+              <text x="590" y="228">f</text><text x="590" y="248">g</text><text x="590" y="268">h</text><text x="590" y="288">i</text><text x="590" y="308">j</text>
+            </g>
+
+            <!-- X-Ray Internal conductors (toggled) -->
+            <g id="xrayConductors" opacity="0" style="transition: opacity 0.25s ease;">
+              <rect x="30" y="25" width="560" height="6" fill="#38bdf8" opacity="0.3"/>
+              <rect x="30" y="49" width="560" height="6" fill="#f87171" opacity="0.3"/>
+              <g fill="#fbbf24" opacity="0.3">
+                <rect x="298" y="73" width="6" height="85" rx="2"/>
+                <rect x="317" y="73" width="6" height="85" rx="2"/>
+                <rect x="336" y="73" width="6" height="85" rx="2"/>
+              </g>
+            </g>
+
+            <!-- Breadboard Holes Grid -->
+            <g id="breadboardHoles" fill="#1c1917">
+              <!-- Rendered via JS -->
+            </g>
+
+            <!-- ================= ROTARY POTENTIOMETER (HMI_POT) ================= -->
+            <g class="comp-pot" data-info="Forgó potenciométer (10kΩ): bal láb → GND kék sín, középső láb (Wiper) → STM32 PC0 (ADC1_IN10, HMI_POT), jobb láb → +3.3V piros sín. A wiper feszültsége 0V és 3.3V között változik forgatáskor.">
+              <!-- Rail wires (drawn first, partially hidden behind the body) -->
+              <path d="M 301,95 L 301,28" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="301" cy="95" r="4" fill="#64748b"/>
+              <circle cx="301" cy="28" r="4" fill="#334155"/>
+
+              <path d="M 339,95 L 339,52" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+              <circle cx="339" cy="95" r="4" fill="#ef4444"/>
+              <circle cx="339" cy="52" r="4" fill="#b91c1c"/>
+
+              <!-- Body -->
+              <rect x="290" y="40" width="60" height="45" rx="6" fill="#334155" stroke="#0f172a" stroke-width="2"/>
+              <circle cx="320" cy="62" r="20" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+              <g id="potPointer" transform="rotate(-90 320 62)">
+                <line x1="320" y1="62" x2="320" y2="45" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="320" cy="62" r="3" fill="#94a3b8"/>
+              </g>
+
+              <!-- Legs (drawn after body, fully visible) -->
+              <line x1="301" y1="85" x2="301" y2="115" stroke="#64748b" stroke-width="2.2"/>
+              <line x1="320" y1="85" x2="320" y2="115" stroke="#f59e0b" stroke-width="2.2"/>
+              <line x1="339" y1="85" x2="339" y2="115" stroke="#ef4444" stroke-width="2.2"/>
+              <circle cx="301" cy="115" r="4" fill="#64748b"/>
+              <circle cx="320" cy="115" r="4" fill="#f59e0b"/>
+              <circle cx="339" cy="115" r="4" fill="#ef4444"/>
+
+              <text x="301" y="128" font-size="6.5" fill="#94a3b8" text-anchor="middle" font-weight="700">GND</text>
+              <text x="320" y="128" font-size="6.5" fill="#fbbf24" text-anchor="middle" font-weight="700">WPR</text>
+              <text x="339" y="128" font-size="6.5" fill="#fca5a5" text-anchor="middle" font-weight="700">+3V3</text>
+
+              <text x="320" y="172" font-size="9.5" font-weight="900" fill="#475569" text-anchor="middle">POTENCIOMÉTER</text>
+              <text x="320" y="183" font-size="7.5" font-weight="700" fill="#94a3b8" text-anchor="middle">HMI_POT — 10 kΩ</text>
+            </g>
+          </g>
+
+          <!-- ================= LIVE DIGITAL READOUT PANEL ================= -->
+          <g id="digitalPanel">
+            <rect x="190" y="405" width="300" height="80" rx="10" fill="#020617" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="340" y="420" font-size="8" fill="#94a3b8" text-anchor="middle">ÉLŐ MÉRÉS — HMI_POT (PC0 / ADC1_IN10)</text>
+            <text id="adcDigital" x="270" y="449" font-size="22" font-weight="900" font-family="monospace" fill="#38bdf8" text-anchor="middle">----</text>
+            <text id="voltDigital" x="410" y="449" font-size="17" font-weight="800" font-family="monospace" fill="#f59e0b" text-anchor="middle">-- V</text>
+            <text id="adcRawSmall" x="340" y="465" font-size="9" font-family="monospace" fill="#94a3b8" text-anchor="middle"></text>
+            <rect x="210" y="472" width="260" height="6" rx="3" fill="#1e293b"/>
+            <rect id="adcBarFill" x="210" y="472" width="0" height="6" rx="3" fill="#38bdf8"/>
+          </g>
+
+          <!-- ================= WIRE FROM NUCLEO (BOTTOM DOCK) ================= -->
+          <path d="M 340,490 L 340,175 L 350,175" fill="none" stroke="#f59e0b" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="350" cy="175" r="4.5" fill="#d97706"/>
+
+          <!-- ================= STM32 DOCK (BOTTOM) ================= -->
+          <g transform="translate(20, 490)">
+            <rect x="0" y="0" width="640" height="110" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+            <rect x="0" y="0" width="640" height="24" rx="8" fill="#1e293b"/>
+            <text x="15" y="16" font-size="11" font-weight="800" fill="#38bdf8">STM32 NUCLEO CSATLAKOZÓK</text>
+
+            <!-- GND -->
+            <g transform="translate(75, 36)">
+              <rect x="0" y="0" width="100" height="58" rx="6" fill="#1e293b"/>
+              <circle cx="50" cy="20" r="6" fill="#0f172a" stroke="#64748b" stroke-width="1.5"/>
+              <text x="50" y="40" font-size="11" font-weight="900" fill="#f8fafc" text-anchor="middle">GND</text>
+              <text x="50" y="52" font-size="8" fill="#94a3b8" text-anchor="middle">Kék sín (-)</text>
+            </g>
+
+            <!-- PC0 -->
+            <g transform="translate(250, 36)">
+              <rect x="0" y="0" width="140" height="58" rx="6" fill="#1e293b" stroke="#f97316" stroke-width="1.5"/>
+              <circle cx="70" cy="20" r="6" id="pinIndicatorPC0" fill="#475569"/>
+              <text x="70" y="40" font-size="12" font-weight="900" fill="#fdba74" text-anchor="middle">PC0</text>
+              <text x="70" y="52" font-size="8.5" font-weight="700" fill="#f97316" text-anchor="middle">ADC1_IN10 (HMI_POT)</text>
+            </g>
+
+            <!-- 3V3 -->
+            <g transform="translate(465, 36)">
+              <rect x="0" y="0" width="100" height="58" rx="6" fill="#1e293b"/>
+              <circle cx="50" cy="20" r="6" fill="#ef4444"/>
+              <text x="50" y="40" font-size="11" font-weight="900" fill="#fca5a5" text-anchor="middle">+3.3V</text>
+              <text x="50" y="52" font-size="8" fill="#94a3b8" text-anchor="middle">Piros sín (+)</text>
+            </g>
+          </g>
+
+        </svg>
+      </div>
+    </div>
+
+    <!-- SIDEBAR WITH CLEAR HTML CARDS -->
+    <div class="sidebar">
+
+      <!-- CARD 1: PONTOS LYUK-POZÍCIÓK -->
+      <div class="info-card">
+        <h3>📍 Pontos Lyuk-Pozíciók</h3>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.7rem; line-height: 1.4;">
+          💡 Egy oszlop <code>a-e</code> sorainak 5 lyuka belsőleg össze van kötve — nem kell pontosan ugyanabba a lyukba dugni, elég ugyanabba az oszlopba.
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header yellow">
+            <span>Potenciométer (HMI_POT)</span>
+            <span>STM32 PC0</span>
+          </div>
+          <div>• Bal láb (GND): <span class="pos-coord">14. oszlop, c sor</span> &rarr; <span style="color:#93c5fd; font-weight:700;">Kék (-) GND sín</span></div>
+          <div>• Középső láb (Wiper): <span class="pos-coord">15. oszlop, c sor</span> &rarr; STM32 <b>PC0</b> (ADC1_IN10)</div>
+          <div>• Jobb láb (+3.3V): <span class="pos-coord">16. oszlop, c sor</span> &rarr; <span style="color:#fca5a5; font-weight:700;">Piros (+) 3.3V sín</span></div>
+        </div>
+      </div>
+
+      <!-- CARD 2: VOLTAGE DIVIDER GUIDE -->
+      <div class="info-card">
+        <h3>⚙️ Feszültségosztó Elv</h3>
+        <div class="polarity-box">
+          <div class="polarity-row">
+            <span class="tag-cathode">GND</span>
+            <span>0% elforgatás &rarr; 0V</span>
+          </div>
+        </div>
+        <div class="polarity-box">
+          <div class="polarity-row">
+            <span class="tag-wiper">WIPER</span>
+            <span>Mozgó érintkező &rarr; PC0</span>
+          </div>
+          <div class="polarity-row">
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Kimenet:</span>
+            <span style="font-size: 0.78rem; color: #fbbf24;">0V .. 3.3V (analóg)</span>
+          </div>
+        </div>
+        <div class="polarity-box">
+          <div class="polarity-row">
+            <span class="tag-anode">+3.3V</span>
+            <span>100% elforgatás &rarr; 3.3V</span>
+          </div>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
+          💡 12 bites felbontás: <code>Code = (V_IN / 3.3V) &times; 4095</code>, azaz 1 LSB &asymp; 0.805 mV.
+        </div>
+      </div>
+
+      <!-- CARD 3: REAL-TIME STATE TABLE -->
+      <div class="info-card">
+        <h3>🗺️ Állapot &amp; Élő Mérés</h3>
+        <table class="state-table">
+          <thead>
+            <tr>
+              <th>Jel</th>
+              <th>Pin</th>
+              <th>Info</th>
+              <th>Érték</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="status-dot" id="dotPot"></span> Wiper</td><td><code>PC0</code></td><td>ADC1_IN10</td><td id="txtAdcRaw">----</td></tr>
+            <tr><td>Feszültség</td><td>—</td><td>U = ADC/4095 &times; 3.3V</td><td id="txtVoltage">-- V</td></tr>
+            <tr id="rowAvg" style="display:none;"><td>Átlagolt</td><td>—</td><td>Mozgóátlag (8 minta)</td><td id="txtAdcAvg">----</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CARD 4: CODE MONITOR -->
+      <div class="info-card">
+        <h3>💻 Élő Kódkövető</h3>
+        <div class="code-monitor" id="codeMonitor">
+          <span style="color:#64748b;">// Válassz szimulációs módot a fenti gombokkal!</span><br>
+          <span style="color:#f43f5e; font-weight:bold;">while</span> (1) {<br>
+          &nbsp;&nbsp;<span id="codeTraceText">HAL_Delay(200);</span><br>
+          }
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <div>Sapientia EMTE — Mikrokontrollerek és Beágyazott Rendszerek Laboratórium (Labor 06)</div>
+    <div>Hardver: STM32 Nucleo-F446ZE + 10 kΩ Forgó Potenciométer | Szoftver: STM32CubeIDE (HAL)</div>
+  </footer>
+
+  <script>
+    let currentMode = 'wiring';
+    let isXrayOn = false;
+    let sampleHistory = [];
+
+    function initHoles() {
+      const container = document.getElementById('breadboardHoles');
+      if (!container) return;
+      let s = '';
+
+      for (let c = 1; c <= 30; c++) {
+        const cx = 35 + c * 19;
+        s += `<circle cx="${cx}" cy="28" r="2.2"/>`;
+        s += `<circle cx="${cx}" cy="52" r="2.2"/>`;
+        s += `<circle cx="${cx}" cy="328" r="2.2"/>`;
+        s += `<circle cx="${cx}" cy="352" r="2.2"/>`;
+
+        [75, 95, 115, 135, 155].forEach(y => s += `<circle cx="${cx}" cy="${y}" r="2.2"/>`);
+        [225, 245, 265, 285, 305].forEach(y => s += `<circle cx="${cx}" cy="${y}" r="2.2"/>`);
+
+        if ([1, 5, 10, 15, 20, 25, 30].includes(c)) {
+          s += `<text x="${cx}" y="67" font-size="8.5" font-weight="700" fill="#78716c" text-anchor="middle" font-family="monospace">${c}</text>`;
+          s += `<text x="${cx}" y="217" font-size="8.5" font-weight="700" fill="#78716c" text-anchor="middle" font-family="monospace">${c}</text>`;
+        }
+      }
+      container.innerHTML = s;
+    }
+
+    function rotatePot(value) {
+      const angle = -120 + (value / 4095) * 240;
+      const pointer = document.getElementById('potPointer');
+      if (pointer) pointer.setAttribute('transform', `rotate(${angle.toFixed(1)} 320 62)`);
+    }
+
+    function blinkPinPC0() {
+      const ind = document.getElementById('pinIndicatorPC0');
+      const dot = document.getElementById('dotPot');
+      if (ind) ind.setAttribute('fill', '#f97316');
+      if (dot) dot.className = 'status-dot on-amber';
+      setTimeout(() => {
+        if (ind) ind.setAttribute('fill', '#475569');
+        if (dot) dot.className = 'status-dot';
+      }, 200);
+    }
+
+    function updateDigitalPanel(rawAdc, displayedAdc, voltage) {
+      document.getElementById('adcDigital').textContent = displayedAdc;
+      document.getElementById('voltDigital').textContent = voltage.toFixed(2) + ' V';
+      const barWidth = Math.max(0, Math.min(260, (displayedAdc / 4095) * 260));
+      document.getElementById('adcBarFill').setAttribute('width', barWidth.toFixed(1));
+    }
+
+    function applyPot(rawValue) {
+      const value = Math.max(0, Math.min(4095, Math.round(Number(rawValue))));
+      document.getElementById('potSlider').value = value;
+      rotatePot(value);
+      blinkPinPC0();
+
+      const monitor = document.getElementById('codeTraceText');
+      const rowAvg = document.getElementById('rowAvg');
+
+      if (currentMode === 'interrupt') {
+        // Zajos minta szimulálása + egyszerű mozgóátlag (8 minta) a README "szoftveres átlagolás" koncepciójához
+        const noisy = Math.max(0, Math.min(4095, value + (Math.random() * 160 - 80)));
+        sampleHistory.push(noisy);
+        if (sampleHistory.length > 8) sampleHistory.shift();
+        const avg = sampleHistory.reduce((a, b) => a + b, 0) / sampleHistory.length;
+
+        document.getElementById('txtAdcRaw').textContent = Math.round(noisy);
+        document.getElementById('txtAdcAvg').textContent = Math.round(avg);
+        document.getElementById('adcRawSmall').textContent = `nyers: ${Math.round(noisy)}`;
+        rowAvg.style.display = '';
+
+        const volt = (avg / 4095) * 3.3;
+        document.getElementById('txtVoltage').textContent = volt.toFixed(2) + ' V';
+        updateDigitalPanel(noisy, Math.round(avg), volt);
+
+        monitor.innerHTML = `
+          <span style="color:#64748b;">// HAL_ADC_ConvCpltCallback() -&gt; új minta érkezett</span><br>
+          adc_avg[p_avg_cnt++ % 8] = ${Math.round(noisy)};<br>
+          avg = <span style="color:#64748b;">// 8 minta átlaga</span> ${Math.round(avg)};<br>
+          HAL_ADC_Start_IT(&amp;hadc1);
+        `;
+      } else {
+        // Polling / wiring mód: nyers, azonnali érték, zaj nélkül
+        document.getElementById('txtAdcRaw').textContent = value;
+        document.getElementById('adcRawSmall').textContent = '';
+        rowAvg.style.display = 'none';
+
+        const volt = (value / 4095) * 3.3;
+        document.getElementById('txtVoltage').textContent = volt.toFixed(2) + ' V';
+        updateDigitalPanel(value, value, volt);
+
+        if (currentMode === 'polling') {
+          monitor.innerHTML = `
+            <span style="color:#64748b;">// HAL_ADC_Start(&amp;hadc1);</span><br>
+            <span style="color:#64748b;">if</span> (HAL_ADC_PollForConversion(&amp;hadc1, 10) == HAL_OK) {<br>
+            &nbsp;&nbsp;adc = HAL_ADC_GetValue(&amp;hadc1); <span style="color:#64748b;">// ${value}</span><br>
+            }
+          `;
+        }
+      }
+    }
+
+    function nudgePot(delta) {
+      const slider = document.getElementById('potSlider');
+      applyPot(Number(slider.value) + delta);
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      sampleHistory = [];
+
+      document.getElementById('btnModeWiring').classList.toggle('active', mode === 'wiring');
+      document.getElementById('btnModePolling').classList.toggle('active', mode === 'polling');
+      document.getElementById('btnModeInterrupt').classList.toggle('active', mode === 'interrupt');
+
+      const potControls = document.getElementById('potControls');
+      const monitor = document.getElementById('codeTraceText');
+      const rowAvg = document.getElementById('rowAvg');
+
+      if (mode === 'wiring') {
+        potControls.style.display = 'none';
+        rowAvg.style.display = 'none';
+        document.getElementById('txtAdcRaw').textContent = '----';
+        document.getElementById('adcRawSmall').textContent = '';
+        document.getElementById('txtVoltage').textContent = '-- V';
+        document.getElementById('adcDigital').textContent = '----';
+        document.getElementById('voltDigital').textContent = '-- V';
+        document.getElementById('adcBarFill').setAttribute('width', 0);
+        rotatePot(2048);
+        monitor.innerHTML = `<span style="color:#64748b;">// 1. Feladat előkészület: ADC1 csatorna ellenőrzése az .ioc felületen</span><br>MX_ADC1_Init(); <span style="color:#64748b;">// PC0 -&gt; ADC1_IN10 (HMI_POT)</span>`;
+      } else {
+        potControls.style.display = 'inline-flex';
+        applyPot(document.getElementById('potSlider').value);
+      }
+    }
+
+    function toggleXray() {
+      isXrayOn = !isXrayOn;
+      const xray = document.getElementById('xrayConductors');
+      const btn = document.getElementById('btnToggleXray');
+      if (xray) xray.style.opacity = isXrayOn ? '1' : '0';
+      if (btn) btn.classList.toggle('active', isXrayOn);
+    }
+
+    function resetSimulation() {
+      setMode('wiring');
+    }
+
+    function initTooltips() {
+      const tooltip = document.getElementById('tooltip');
+      document.querySelectorAll('[data-info]').forEach(el => {
+        el.addEventListener('mousemove', (e) => {
+          tooltip.style.display = 'block';
+          tooltip.textContent = el.getAttribute('data-info');
+          tooltip.style.left = (e.pageX + 15) + 'px';
+          tooltip.style.top = (e.pageY + 15) + 'px';
+        });
+        el.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initHoles();
+      initTooltips();
+      rotatePot(2048);
+    });
+  </script>
+</body>
+</html>

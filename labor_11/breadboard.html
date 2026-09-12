@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Labor 11: STM32 Nucleo &amp; RTC Ébresztőóra Interaktív Bekötés és Szimulátor</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: #1e293b;
+      --card-border: #334155;
+      --accent-cyan: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.9rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-badge {
+      background: #0284c7;
+      color: white;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      margin-top: 0.15rem;
+    }
+
+    .controls-bar {
+      background: #182234;
+      padding: 0.65rem 2rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: #334155;
+      border-color: var(--accent-cyan);
+    }
+
+    .btn.active {
+      background: #0284c7;
+      border-color: #38bdf8;
+      color: white;
+    }
+
+    .btn-action {
+      background: #059669;
+      border: none;
+      color: white;
+      padding: 0.45rem 1.1rem;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-action:hover {
+      background: #10b981;
+    }
+
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+
+    .btn-alarm {
+      background: #9f1239;
+      border: 1px solid #ef4444;
+      color: white;
+      padding: 0.45rem 1rem;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-alarm:hover { background: #be123c; }
+
+    .app-container {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      flex: 1;
+      gap: 1.25rem;
+      padding: 1.25rem 2rem;
+      overflow: hidden;
+    }
+
+    .workspace {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: auto;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .board-svg-wrap {
+      width: 100%;
+      max-width: 880px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+      max-height: calc(100vh - 150px);
+    }
+
+    .info-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .info-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .pos-item {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.6rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+
+    .pos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      margin-bottom: 0.3rem;
+    }
+
+    .pos-header.red { color: #fca5a5; }
+    .pos-header.amber { color: #fde68a; }
+    .pos-header.cyan { color: #a5f3fc; }
+    .pos-header.emerald { color: #a7f3d0; }
+    .pos-header.violet { color: #ddd6fe; }
+
+    .pos-coord {
+      display: inline-block;
+      background: #1e293b;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-weight: 700;
+      color: #38bdf8;
+      margin: 0 0.2rem;
+    }
+
+    .polarity-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .polarity-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+      font-size: 0.8rem;
+    }
+
+    .state-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.76rem;
+    }
+
+    .state-table th {
+      text-align: left;
+      padding: 0.35rem;
+      color: var(--text-muted);
+      border-bottom: 1px solid #334155;
+    }
+
+    .state-table td {
+      padding: 0.4rem 0.35rem;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .state-table tr.current-row td {
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    .code-monitor {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #38bdf8;
+      line-height: 1.4;
+      max-height: 170px;
+      overflow-y: auto;
+    }
+
+    .hover-tooltip {
+      position: absolute;
+      background: #0f172a;
+      border: 1px solid var(--accent-cyan);
+      color: white;
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      pointer-events: none;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      z-index: 100;
+      max-width: 260px;
+    }
+
+    footer {
+      background: #090d16;
+      border-top: 1px solid var(--card-border);
+      padding: 0.5rem 2rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    @media (max-width: 1024px) {
+      .app-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">
+      <span class="header-badge">RTC ÉBRESZTŐÓRA BEKÖTÉS</span>
+      <div>
+        <h1>Labor 11: STM32 Nucleo &amp; RTC Ébresztőóra Interaktív Szimulátor</h1>
+        <div class="subtitle">OLED kijelző (I2C2) és 5 irányítógomb bekötése &amp; élő állapotgép szimuláció</div>
+      </div>
+    </div>
+    <div class="btn-group">
+      <a href="README.md" class="btn">📖 Vissza a README-hez</a>
+    </div>
+  </header>
+
+  <div class="controls-bar">
+    <div class="btn-group">
+      <button class="btn active" id="btnModeWiring" onclick="setMode('wiring')">🔍 1. Bekötési Nézet</button>
+      <button class="btn" id="btnModeDemo" onclick="setMode('demo')">⏰ 2. Élő Ébresztőóra Szimuláció</button>
+    </div>
+
+    <div class="btn-group" id="demoControls" style="display:none;">
+      <button class="btn-action" onclick="pressButton('up')" style="background:#0284c7;">▲ FEL (PE5)</button>
+      <button class="btn-action" onclick="pressButton('left')" style="background:#0284c7;">◀ BAL (PE2)</button>
+      <button class="btn-action" onclick="pressButton('middle')" style="background:#7c3aed;">✅ OK (PE3)</button>
+      <button class="btn-action" onclick="pressButton('right')" style="background:#0284c7;">JOBB ▶ (PE6)</button>
+      <button class="btn-action" onclick="pressButton('down')" style="background:#0284c7;">▼ LE (PE4)</button>
+      <button class="btn-alarm" onclick="forceAlarm()" title="Ez NEM fizikai gomb — a belső RTC Alarm A periféria megszakítását szimulálja">🔔 RTC Alarm Megszakítás Szimulálása</button>
+    </div>
+    <button class="btn" id="btnReset" onclick="resetSimulation()">🔄 Alaphelyzet</button>
+  </div>
+
+  <div class="app-container">
+
+    <div class="workspace" id="workspace">
+      <div class="hover-tooltip" id="tooltip"></div>
+
+      <div class="board-svg-wrap">
+        <svg id="breadboardSvg" viewBox="0 0 900 700" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+
+          <!-- ================= OLED MODULE ================= -->
+          <g class="comp-oled" data-info="SSD1306 grafikus OLED modul, 128x64 képpont, I2C interfész (cím: 0x3C) — dátum, idő és ébresztés menük megjelenítésére">
+            <rect x="40" y="30" width="320" height="200" rx="10" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+            <rect x="70" y="55" width="260" height="130" rx="3" fill="#000814" stroke="#1e293b" stroke-width="2" id="oledScreenBg"/>
+            <g id="oledContent" transform="translate(70,55) scale(2.03125)"></g>
+            <text x="200" y="203" font-size="9" fill="#64748b" text-anchor="middle">SSD1306 0.96" 128&#215;64 &mdash; I2C2, cím: 0x3C</text>
+          </g>
+
+          <!-- OLED header pins -->
+          <g font-size="9" font-weight="800" text-anchor="middle" font-family="monospace">
+            <circle cx="90" cy="230" r="5" fill="#ef4444" id="pinOledVCC"/>
+            <text x="90" y="222" fill="#fca5a5">VCC</text>
+
+            <circle cx="160" cy="230" r="5" fill="#3b82f6" id="pinOledGND"/>
+            <text x="160" y="222" fill="#93c5fd">GND</text>
+
+            <circle cx="230" cy="230" r="5" fill="#f59e0b" id="pinOledSCL"/>
+            <text x="230" y="222" fill="#fde68a">SCL</text>
+
+            <circle cx="300" cy="230" r="5" fill="#10b981" id="pinOledSDA"/>
+            <text x="300" y="222" fill="#a7f3d0">SDA</text>
+          </g>
+
+          <!-- RTC crystal note (onboard, not wired externally) -->
+          <text x="200" y="255" font-size="8.5" fill="#94a3b8" text-anchor="middle">A 32.768 kHz LSE kristály a Nucleo panelon van — nincs külön bekötés</text>
+
+          <!-- ================= 5-BUTTON NAVIGATION D-PAD ================= -->
+          <!-- UP: HMI_BTN_1 / PE5 -->
+          <g class="comp-button" style="cursor:pointer;" onclick="pressButton('up')" data-info="Nyomógomb (▲ FEL): HMI_BTN_1 — STM32 PE5, belső GPIO_PULLDOWN, lenyomva 3.3V">
+            <rect x="592" y="22" width="56" height="56" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <circle cx="620" cy="50" r="15" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" id="btnPlungerUp"/>
+            <text x="620" y="55" font-size="14" font-weight="900" fill="white" text-anchor="middle">▲</text>
+            <circle cx="600" cy="78" r="4" fill="#ef4444"/>
+            <circle cx="620" cy="78" r="4" fill="#38bdf8" id="pinBtnUpSig"/>
+          </g>
+          <text x="620" y="14" font-size="8" fill="#94a3b8" text-anchor="middle">HMI_BTN_1 / PE5</text>
+
+          <!-- LEFT: HMI_BTN_2 / PE2 -->
+          <g class="comp-button" style="cursor:pointer;" onclick="pressButton('left')" data-info="Nyomógomb (◀ BAL): HMI_BTN_2 — STM32 PE2, belső GPIO_PULLDOWN, lenyomva 3.3V">
+            <rect x="512" y="102" width="56" height="56" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <circle cx="540" cy="130" r="15" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" id="btnPlungerLeft"/>
+            <text x="540" y="135" font-size="14" font-weight="900" fill="white" text-anchor="middle">◀</text>
+            <circle cx="520" cy="158" r="4" fill="#ef4444"/>
+            <circle cx="540" cy="158" r="4" fill="#38bdf8" id="pinBtnLeftSig"/>
+          </g>
+          <text x="500" y="130" font-size="8" fill="#94a3b8" text-anchor="end">HMI_BTN_2 / PE2</text>
+
+          <!-- MIDDLE: HMI_BTN_3 / PE3 -->
+          <g class="comp-button" style="cursor:pointer;" onclick="pressButton('middle')" data-info="Nyomógomb (OK / jóváhagyás): HMI_BTN_3 — STM32 PE3, belső GPIO_PULLDOWN, lenyomva 3.3V">
+            <rect x="592" y="102" width="56" height="56" rx="8" fill="#1e293b" stroke="#a78bfa" stroke-width="1.2"/>
+            <circle cx="620" cy="130" r="15" fill="#7c3aed" stroke="#a78bfa" stroke-width="1.5" id="btnPlungerMiddle"/>
+            <text x="620" y="135" font-size="11" font-weight="900" fill="white" text-anchor="middle">OK</text>
+            <circle cx="600" cy="158" r="4" fill="#ef4444"/>
+            <circle cx="620" cy="158" r="4" fill="#a78bfa" id="pinBtnMiddleSig"/>
+          </g>
+
+          <!-- RIGHT: HMI_BTN_4 / PE6 -->
+          <g class="comp-button" style="cursor:pointer;" onclick="pressButton('right')" data-info="Nyomógomb (JOBB ▶): HMI_BTN_4 — STM32 PE6, belső GPIO_PULLDOWN, lenyomva 3.3V">
+            <rect x="672" y="102" width="56" height="56" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <circle cx="700" cy="130" r="15" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" id="btnPlungerRight"/>
+            <text x="700" y="135" font-size="14" font-weight="900" fill="white" text-anchor="middle">▶</text>
+            <circle cx="680" cy="158" r="4" fill="#ef4444"/>
+            <circle cx="700" cy="158" r="4" fill="#38bdf8" id="pinBtnRightSig"/>
+          </g>
+          <text x="740" y="130" font-size="8" fill="#94a3b8" text-anchor="start">HMI_BTN_4 / PE6</text>
+
+          <!-- DOWN: HMI_BTN_5 / PE4 -->
+          <g class="comp-button" style="cursor:pointer;" onclick="pressButton('down')" data-info="Nyomógomb (▼ LE): HMI_BTN_5 — STM32 PE4, belső GPIO_PULLDOWN, lenyomva 3.3V">
+            <rect x="592" y="182" width="56" height="56" rx="8" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <circle cx="620" cy="210" r="15" fill="#0284c7" stroke="#38bdf8" stroke-width="1.5" id="btnPlungerDown"/>
+            <text x="620" y="215" font-size="14" font-weight="900" fill="white" text-anchor="middle">▼</text>
+            <circle cx="600" cy="238" r="4" fill="#ef4444"/>
+            <circle cx="620" cy="238" r="4" fill="#38bdf8" id="pinBtnDownSig"/>
+          </g>
+          <text x="620" y="256" font-size="8" fill="#94a3b8" text-anchor="middle">HMI_BTN_5 / PE4</text>
+
+          <!-- Shared 3.3V bus for the 5 buttons -->
+          <line x1="512" y1="280" x2="728" y2="280" stroke="#ef4444" stroke-width="3"/>
+          <path d="M 600,78 L 600,280" fill="none" stroke="#ef4444" stroke-width="2.5" opacity="0.8"/>
+          <path d="M 520,158 L 520,280" fill="none" stroke="#ef4444" stroke-width="2.5" opacity="0.8"/>
+          <path d="M 600,158 L 600,280" fill="none" stroke="#ef4444" stroke-width="2.5" opacity="0.8"/>
+          <path d="M 680,158 L 680,280" fill="none" stroke="#ef4444" stroke-width="2.5" opacity="0.8"/>
+          <path d="M 600,238 L 600,280" fill="none" stroke="#ef4444" stroke-width="2.5" opacity="0.8"/>
+          <path d="M 620,280 L 620,600 L 290,600 L 290,616" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+
+          <!-- Button signal wires -->
+          <path d="M 620,78 L 620,470 L 366,470 L 366,616" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 540,158 L 540,480 L 442,480 L 442,616" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 620,158 L 620,490 L 518,490 L 518,616" fill="none" stroke="#a78bfa" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 700,158 L 700,500 L 594,500 L 594,616" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 620,238 L 620,510 L 670,510 L 670,616" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+
+          <!-- OLED wires -->
+          <path d="M 90,230 L 90,540 L 290,540 L 290,616" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 160,230 L 160,550 L 62,550 L 62,616" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 230,230 L 230,560 L 214,560 L 214,616" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 300,230 L 300,570 L 138,570 L 138,616" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+
+          <!-- ================= STM32 DOCK (BOTTOM) ================= -->
+          <g transform="translate(20, 560)">
+            <rect x="0" y="0" width="760" height="110" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+            <rect x="0" y="0" width="760" height="24" rx="8" fill="#1e293b"/>
+            <text x="15" y="16" font-size="11" font-weight="800" fill="#38bdf8">STM32 NUCLEO CSATLAKOZÓK</text>
+
+            <g transform="translate(8, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b"/>
+              <circle cx="34" cy="20" r="6" fill="#0f172a" stroke="#3b82f6" stroke-width="1.5"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#f8fafc" text-anchor="middle">GND</text>
+              <text x="34" y="51" font-size="7.5" fill="#94a3b8" text-anchor="middle">OLED</text>
+            </g>
+
+            <g transform="translate(84, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b" stroke="#10b981" stroke-width="1.2"/>
+              <circle cx="34" cy="20" r="6" id="pinIndicatorPF0" fill="#475569"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#a7f3d0" text-anchor="middle">PF0</text>
+              <text x="34" y="51" font-size="7.5" font-weight="700" fill="#10b981" text-anchor="middle">I2C2_SDA</text>
+            </g>
+
+            <g transform="translate(160, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="1.2"/>
+              <circle cx="34" cy="20" r="6" id="pinIndicatorPF1" fill="#475569"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#fde68a" text-anchor="middle">PF1</text>
+              <text x="34" y="51" font-size="7.5" font-weight="700" fill="#f59e0b" text-anchor="middle">I2C2_SCL</text>
+            </g>
+
+            <g transform="translate(236, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b"/>
+              <circle cx="34" cy="20" r="6" fill="#ef4444"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#fca5a5" text-anchor="middle">+3.3V</text>
+              <text x="34" y="51" font-size="7.5" fill="#94a3b8" text-anchor="middle">Közös táp</text>
+            </g>
+
+            <g transform="translate(312, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+              <circle cx="34" cy="20" r="6" id="pinIndicatorPE5" fill="#475569"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#a5f3fc" text-anchor="middle">PE5</text>
+              <text x="34" y="51" font-size="7.5" font-weight="700" fill="#38bdf8" text-anchor="middle">BTN_1 ▲</text>
+            </g>
+
+            <g transform="translate(388, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+              <circle cx="34" cy="20" r="6" id="pinIndicatorPE2" fill="#475569"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#a5f3fc" text-anchor="middle">PE2</text>
+              <text x="34" y="51" font-size="7.5" font-weight="700" fill="#38bdf8" text-anchor="middle">BTN_2 ◀</text>
+            </g>
+
+            <g transform="translate(464, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b" stroke="#a78bfa" stroke-width="1.2"/>
+              <circle cx="34" cy="20" r="6" id="pinIndicatorPE3" fill="#475569"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#ddd6fe" text-anchor="middle">PE3</text>
+              <text x="34" y="51" font-size="7.5" font-weight="700" fill="#a78bfa" text-anchor="middle">BTN_3 OK</text>
+            </g>
+
+            <g transform="translate(540, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+              <circle cx="34" cy="20" r="6" id="pinIndicatorPE6" fill="#475569"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#a5f3fc" text-anchor="middle">PE6</text>
+              <text x="34" y="51" font-size="7.5" font-weight="700" fill="#38bdf8" text-anchor="middle">BTN_4 ▶</text>
+            </g>
+
+            <g transform="translate(616, 36)">
+              <rect x="0" y="0" width="68" height="58" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+              <circle cx="34" cy="20" r="6" id="pinIndicatorPE4" fill="#475569"/>
+              <text x="34" y="40" font-size="10" font-weight="900" fill="#a5f3fc" text-anchor="middle">PE4</text>
+              <text x="34" y="51" font-size="7.5" font-weight="700" fill="#38bdf8" text-anchor="middle">BTN_5 ▼</text>
+            </g>
+          </g>
+
+        </svg>
+      </div>
+    </div>
+
+    <!-- SIDEBAR WITH CLEAR HTML CARDS -->
+    <div class="sidebar">
+
+      <!-- CARD 1: EXACT WIRING -->
+      <div class="info-card">
+        <h3>📍 Pontos Bekötés</h3>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.7rem; line-height: 1.4;">
+          💡 Az OLED I2C2-n kommunikál (PF0/PF1). Az 5 gomb belső lehúzó ellenállással (GPIO_PULLDOWN) van konfigurálva. A 32.768 kHz LSE kristály a Nucleo panelon van, azt nem kell külön bekötni.
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header red">
+            <span>SSD1306 OLED</span>
+            <span>I2C2</span>
+          </div>
+          <div>• VCC → <span class="pos-coord">+3.3V</span>, GND → <span class="pos-coord">GND</span></div>
+          <div>• SCL → <span class="pos-coord">PF1</span> (I2C2_SCL), SDA → <span class="pos-coord">PF0</span> (I2C2_SDA)</div>
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header cyan">
+            <span>▲ FEL / ◀ BAL / ▶ JOBB / ▼ LE</span>
+            <span>HMI_BTN_1,2,4,5</span>
+          </div>
+          <div>• FEL: <span class="pos-coord">PE5</span> · BAL: <span class="pos-coord">PE2</span></div>
+          <div>• JOBB: <span class="pos-coord">PE6</span> · LE: <span class="pos-coord">PE4</span></div>
+        </div>
+
+        <div class="pos-item">
+          <div class="pos-header violet">
+            <span>OK / Jóváhagyás</span>
+            <span>HMI_BTN_3</span>
+          </div>
+          <div>• Jel láb: <span class="pos-coord">PE3</span> &rarr; Táp láb: 3.3V</div>
+        </div>
+      </div>
+
+      <!-- CARD 2: I2C INFO -->
+      <div class="info-card">
+        <h3>🔌 I2C2 Busz</h3>
+        <div class="polarity-box">
+          <div class="polarity-row">
+            <span style="color: var(--text-muted);">Periféria:</span>
+            <span style="color: var(--accent-cyan);">I2C2 (nem I2C1!)</span>
+          </div>
+          <div class="polarity-row">
+            <span style="color: var(--text-muted);">SDA / SCL:</span>
+            <span style="color: var(--accent-emerald);">PF0 / PF1</span>
+          </div>
+          <div class="polarity-row">
+            <span style="color: var(--text-muted);">RTC órajel:</span>
+            <span style="color: var(--accent-amber);">LSE 32.768 kHz (onboard)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD 3: STATE TABLE -->
+      <div class="info-card">
+        <h3>🗺️ Ébresztőóra Állapotgép</h3>
+        <table class="state-table" id="stateTable">
+          <thead>
+            <tr><th>Állapot</th><th>Kiváltó gomb</th></tr>
+          </thead>
+          <tbody>
+            <tr data-state="SHOW_DATE_TIME"><td>SHOW_DATE_TIME</td><td>alaphelyzet</td></tr>
+            <tr data-state="SHOW_ALARM_PRESET_TIME"><td>SHOW_ALARM_PRESET_TIME</td><td>▲/▼ innen</td></tr>
+            <tr data-state="SET_DATE_TIME"><td>SET_DATE_TIME</td><td>OK (dátum/idő nézetből)</td></tr>
+            <tr data-state="SET_ALARM"><td>SET_ALARM</td><td>OK (ébresztés nézetből)</td></tr>
+            <tr data-state="ALARM_IN_PROGRESS"><td>ALARM_IN_PROGRESS</td><td>RTC Alarm A megszakítás</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CARD 4: CODE MONITOR -->
+      <div class="info-card">
+        <h3>💻 Élő Kódkövető</h3>
+        <div class="code-monitor" id="codeMonitor">
+          <span style="color:#64748b;">// Válassz szimulációs módot a fenti gombokkal!</span><br>
+          <span id="codeTraceText">MX_RTC_Init(); OLED_Init();</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <div>Sapientia EMTE — Mikrokontrollerek és Beágyazott Rendszerek Laboratórium (Labor 11)</div>
+    <div>Hardver: STM32 Nucleo-F446ZE + HMI Shield | Szoftver: STM32CubeIDE (HAL)</div>
+  </footer>
+
+  <script>
+    let currentMode = 'wiring';
+    let mainState = 'NORMAL_OPERATION';
+    let subState = 'SHOW_DATE_TIME';
+    let clock = { year: 26, month: 9, day: 12, hour: 14, minute: 30, second: 0 };
+    let alarm = { hour: 14, minute: 31, second: 0, on: true };
+    let editClock = null, editAlarm = null;
+    let selIdxDateTime = 0;
+    let selIdxAlarm = 0;
+    let blinkOn = true;
+    let tickInterval = null;
+
+    const DATETIME_FIELDS = ['YEAR', 'MONTH', 'DAY', 'HOUR', 'MINUTE', 'SECOND'];
+    const ALARM_FIELDS = ['ALARM_STATE', 'HOUR', 'MINUTE', 'SECOND'];
+
+    // Exact cursor positions from alarm_clock.c's time_objects[] tables (OLED pixel space)
+    const DATETIME_POS = { YEAR: [22, 33], MONTH: [55, 33], DAY: [88, 33], HOUR: [22, 51], MINUTE: [55, 51], SECOND: [88, 51] };
+    const ALARM_POS = { ALARM_STATE: [0, 33], HOUR: [22, 51], MINUTE: [55, 51], SECOND: [88, 51] };
+
+    function pad2(n) { return n.toString().padStart(2, '0'); }
+    function isLeap(y) { return y % 4 === 0; }
+    function maxDay(y, m) {
+      const days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      let d = days[m - 1];
+      if (isLeap(y) && m === 2) d += 1;
+      return d;
+    }
+
+    function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+    function renderScreen() {
+      const bg = document.getElementById('oledScreenBg');
+      const content = document.getElementById('oledContent');
+      let s = '';
+
+      if (mainState === 'ALARM_IN_PROGRESS') {
+        const bgFill = blinkOn ? '#e2e8f0' : '#000814';
+        const fgFill = blinkOn ? '#000814' : '#e2e8f0';
+        bg.setAttribute('fill', bgFill);
+        s += `<text x="2" y="34" font-size="16" font-weight="900" fill="${fgFill}" font-family="monospace">ALARM!!!</text>`;
+        content.innerHTML = s;
+        return;
+      }
+
+      bg.setAttribute('fill', '#000814');
+      const c = '#e2e8f0';
+
+      if (subState === 'SHOW_DATE_TIME') {
+        s += `<text x="0" y="12" font-size="9" fill="${c}" font-family="monospace">Exact time</text>`;
+        s += `<text x="0" y="30" font-size="9" fill="${c}" font-family="monospace">20${pad2(clock.year)}-${pad2(clock.month)}-${pad2(clock.day)}</text>`;
+        s += `<text x="22" y="48" font-size="9" fill="${c}" font-family="monospace">${pad2(clock.hour)}:${pad2(clock.minute)}:${pad2(clock.second)}</text>`;
+      } else if (subState === 'SHOW_ALARM_PRESET_TIME') {
+        s += `<text x="0" y="12" font-size="9" fill="${c}" font-family="monospace">Wake up</text>`;
+        s += `<text x="0" y="30" font-size="9" fill="${c}" font-family="monospace">${alarm.on ? 'ON' : 'OFF'}</text>`;
+        s += `<text x="22" y="48" font-size="9" fill="${c}" font-family="monospace">${pad2(alarm.hour)}:${pad2(alarm.minute)}:${pad2(alarm.second)}</text>`;
+      } else if (subState === 'SET_DATE_TIME') {
+        const ec = editClock || clock;
+        s += `<text x="0" y="12" font-size="9" fill="${c}" font-family="monospace">Set time</text>`;
+        s += `<text x="0" y="30" font-size="9" fill="${c}" font-family="monospace">20${pad2(ec.year)}-${pad2(ec.month)}-${pad2(ec.day)}</text>`;
+        s += `<text x="22" y="48" font-size="9" fill="${c}" font-family="monospace">${pad2(ec.hour)}:${pad2(ec.minute)}:${pad2(ec.second)}</text>`;
+        if (blinkOn) {
+          const field = DATETIME_FIELDS[selIdxDateTime];
+          const [x1, y1] = DATETIME_POS[field];
+          s += `<rect x="${x1}" y="${y1}" width="22" height="2" fill="${c}"/>`;
+        }
+      } else if (subState === 'SET_ALARM') {
+        const ea = editAlarm || alarm;
+        s += `<text x="0" y="12" font-size="9" fill="${c}" font-family="monospace">Set alarm</text>`;
+        s += `<text x="0" y="30" font-size="9" fill="${c}" font-family="monospace">${ea.on ? 'on' : 'off'}</text>`;
+        s += `<text x="22" y="48" font-size="9" fill="${c}" font-family="monospace">${pad2(ea.hour)}:${pad2(ea.minute)}:${pad2(ea.second)}</text>`;
+        if (blinkOn) {
+          const field = ALARM_FIELDS[selIdxAlarm];
+          const [x1, y1] = ALARM_POS[field];
+          s += `<rect x="${x1}" y="${y1}" width="22" height="2" fill="${c}"/>`;
+        }
+      }
+      content.innerHTML = s;
+    }
+
+    function updateStateTable() {
+      const activeState = mainState === 'ALARM_IN_PROGRESS' ? 'ALARM_IN_PROGRESS' : subState;
+      document.querySelectorAll('#stateTable tbody tr').forEach(tr => {
+        tr.classList.toggle('current-row', tr.getAttribute('data-state') === activeState);
+      });
+    }
+
+    function updateCodeMonitor(extra) {
+      const el = document.getElementById('codeTraceText');
+      const activeState = mainState === 'ALARM_IN_PROGRESS' ? 'ALARM_IN_PROGRESS' : subState;
+      const CALLS = {
+        SHOW_DATE_TIME: 'ShowDateTime(&date, &time); // HAL_RTC_GetTime/GetDate(&hrtc, ..., RTC_FORMAT_BIN)',
+        SHOW_ALARM_PRESET_TIME: 'ShowAlarmPresetTime(&alarm, alarmState); // HAL_RTC_GetAlarm(&hrtc, &alarm, RTC_ALARM_A, ...)',
+        SET_DATE_TIME: 'SetDateTime(&date, &time, &button_states); // UpdateSelection(...)',
+        SET_ALARM: 'SetAlarm(&alarm, &alarmState, &date, &time, &button_states); // HAL_RTC_SetAlarm_IT(&hrtc, ...)',
+        ALARM_IN_PROGRESS: 'Alarm(&time); // HAL_RTC_AlarmAEventCallback() -> State.MainState = ALARM_IN_PROGRESS;'
+      };
+      let txt = `<span style="color:#64748b;">// AlarmClock_MainFunction() — SubState: ${activeState}</span><br>${CALLS[activeState]}`;
+      if (extra) txt = `<span style="color:#f472b6;">// ${extra}</span><br>` + txt;
+      el.innerHTML = txt;
+    }
+
+    function tick() {
+      if (currentMode !== 'demo') return;
+      blinkOn = !blinkOn;
+      if (blinkOn) {
+        clock.second++;
+        if (clock.second > 59) { clock.second = 0; clock.minute++; }
+        if (clock.minute > 59) { clock.minute = 0; clock.hour++; }
+        if (clock.hour > 23) { clock.hour = 0; }
+
+        if (mainState === 'NORMAL_OPERATION' && alarm.on &&
+            clock.hour === alarm.hour && clock.minute === alarm.minute && clock.second === alarm.second) {
+          mainState = 'ALARM_IN_PROGRESS';
+          updateCodeMonitor('T7: RTC Alarm A egyezés — HAL_RTC_AlarmAEventCallback() lefut');
+        }
+      }
+      renderScreen();
+      updateStateTable();
+    }
+
+    function forceAlarm() {
+      if (currentMode !== 'demo') setMode('demo');
+      mainState = 'ALARM_IN_PROGRESS';
+      updateCodeMonitor('RTC Alarm A megszakítás (szimulált) — HAL_RTC_AlarmAEventCallback() lefut');
+      renderScreen();
+      updateStateTable();
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      clearInterval(tickInterval);
+      tickInterval = null;
+
+      document.getElementById('btnModeWiring').classList.toggle('active', mode === 'wiring');
+      document.getElementById('btnModeDemo').classList.toggle('active', mode === 'demo');
+      document.getElementById('demoControls').style.display = mode === 'demo' ? 'flex' : 'none';
+
+      if (mode === 'wiring') {
+        mainState = 'NORMAL_OPERATION';
+        subState = 'SHOW_DATE_TIME';
+        renderScreen();
+        updateStateTable();
+        document.getElementById('codeTraceText').innerHTML =
+          `<span style="color:#64748b;">// Hardver ellenőrzés</span><br>MX_I2C2_Init(); MX_RTC_Init(); OLED_Init();`;
+      } else {
+        renderScreen();
+        updateStateTable();
+        updateCodeMonitor();
+        tickInterval = setInterval(tick, 500);
+      }
+    }
+
+    function flashPin(sigId, indId) {
+      const sig = document.getElementById(sigId);
+      if (sig) {
+        const orig = sig.getAttribute('fill');
+        sig.setAttribute('fill', '#ffffff');
+        setTimeout(() => sig.setAttribute('fill', orig), 220);
+      }
+      const ind = document.getElementById(indId);
+      if (ind) {
+        ind.setAttribute('fill', '#ffffff');
+        setTimeout(() => ind.setAttribute('fill', '#475569'), 220);
+      }
+    }
+
+    function pressButton(which) {
+      if (currentMode !== 'demo') setMode('demo');
+
+      const PLUNGERS = { up: 'btnPlungerUp', down: 'btnPlungerDown', left: 'btnPlungerLeft', right: 'btnPlungerRight', middle: 'btnPlungerMiddle' };
+      const SIGPINS = { up: 'pinBtnUpSig', down: 'pinBtnDownSig', left: 'pinBtnLeftSig', right: 'pinBtnRightSig', middle: 'pinBtnMiddleSig' };
+      const INDPINS = { up: 'pinIndicatorPE5', down: 'pinIndicatorPE4', left: 'pinIndicatorPE2', right: 'pinIndicatorPE6', middle: 'pinIndicatorPE3' };
+
+      const plunger = document.getElementById(PLUNGERS[which]);
+      if (plunger) {
+        const orig = plunger.getAttribute('fill');
+        plunger.setAttribute('fill', '#38bdf8');
+        setTimeout(() => plunger.setAttribute('fill', orig), 150);
+      }
+      flashPin(SIGPINS[which], INDPINS[which]);
+
+      // ---- state machine (mirrors alarm_clock.c) ----
+      if (mainState === 'ALARM_IN_PROGRESS') {
+        if (which === 'middle') {
+          mainState = 'NORMAL_OPERATION';
+          updateCodeMonitor('T8: OK gomb — HAL_RTC_DeactivateAlarm(&hrtc, RTC_ALARM_A);');
+        }
+        renderScreen();
+        updateStateTable();
+        return;
+      }
+
+      if (which === 'middle') {
+        if (subState === 'SHOW_DATE_TIME') {
+          subState = 'SET_DATE_TIME';
+          editClock = clone(clock);
+          selIdxDateTime = 0;
+          updateCodeMonitor('T1: OK gomb — dátum/idő nézetből beállító nézetbe');
+        } else if (subState === 'SHOW_ALARM_PRESET_TIME') {
+          subState = 'SET_ALARM';
+          editAlarm = clone(alarm);
+          selIdxAlarm = 0;
+          updateCodeMonitor('T4: OK gomb — ébresztés nézetből beállító nézetbe');
+        } else if (subState === 'SET_DATE_TIME') {
+          clock = clone(editClock);
+          subState = 'SHOW_DATE_TIME';
+          updateCodeMonitor('T2: OK gomb — HAL_RTC_SetDate/SetTime(&hrtc, ...); mentés');
+        } else if (subState === 'SET_ALARM') {
+          alarm = clone(editAlarm);
+          subState = 'SHOW_ALARM_PRESET_TIME';
+          updateCodeMonitor('T5: OK gomb — HAL_RTC_SetAlarm_IT(&hrtc, ...); mentés');
+        }
+      } else if (which === 'up' || which === 'down') {
+        const dir = which === 'up' ? 1 : -1;
+        if (subState === 'SHOW_DATE_TIME') {
+          subState = 'SHOW_ALARM_PRESET_TIME';
+          updateCodeMonitor('T3: ▲/▼ — dátum/idő nézetből ébresztés nézetbe');
+        } else if (subState === 'SHOW_ALARM_PRESET_TIME') {
+          subState = 'SHOW_DATE_TIME';
+          updateCodeMonitor('T6: ▲/▼ — ébresztés nézetből dátum/idő nézetbe');
+        } else if (subState === 'SET_DATE_TIME') {
+          const field = DATETIME_FIELDS[selIdxDateTime];
+          if (field === 'YEAR') editClock.year = (editClock.year + dir + 100) % 100;
+          else if (field === 'MONTH') editClock.month = ((editClock.month - 1 + dir + 12) % 12) + 1;
+          else if (field === 'DAY') {
+            const upper = maxDay(editClock.year, editClock.month);
+            editClock.day = ((editClock.day - 1 + dir + upper) % upper) + 1;
+          } else if (field === 'HOUR') editClock.hour = (editClock.hour + dir + 24) % 24;
+          else if (field === 'MINUTE') editClock.minute = (editClock.minute + dir + 60) % 60;
+          else if (field === 'SECOND') editClock.second = (editClock.second + dir + 60) % 60;
+          updateCodeMonitor('UpdateSelection(&date, &time, NULL, &button_states, ' + field + ')');
+        } else if (subState === 'SET_ALARM') {
+          const field = ALARM_FIELDS[selIdxAlarm];
+          if (field === 'ALARM_STATE') editAlarm.on = !editAlarm.on;
+          else if (field === 'HOUR') editAlarm.hour = (editAlarm.hour + dir + 24) % 24;
+          else if (field === 'MINUTE') editAlarm.minute = (editAlarm.minute + dir + 60) % 60;
+          else if (field === 'SECOND') editAlarm.second = (editAlarm.second + dir + 60) % 60;
+          updateCodeMonitor('UpdateSelection(NULL, &alarm, &alarm_state, &button_states, ' + field + ')');
+        }
+      } else if (which === 'left' || which === 'right') {
+        const dir = which === 'right' ? 1 : -1;
+        if (subState === 'SET_DATE_TIME') {
+          selIdxDateTime = (selIdxDateTime + dir + DATETIME_FIELDS.length) % DATETIME_FIELDS.length;
+          updateCodeMonitor('◀/▶ — kiválasztott mező: ' + DATETIME_FIELDS[selIdxDateTime]);
+        } else if (subState === 'SET_ALARM') {
+          selIdxAlarm = (selIdxAlarm + dir + ALARM_FIELDS.length) % ALARM_FIELDS.length;
+          updateCodeMonitor('◀/▶ — kiválasztott mező: ' + ALARM_FIELDS[selIdxAlarm]);
+        }
+      }
+
+      renderScreen();
+      updateStateTable();
+    }
+
+    function resetSimulation() {
+      clock = { year: 26, month: 9, day: 12, hour: 14, minute: 30, second: 0 };
+      alarm = { hour: 14, minute: 31, second: 0, on: true };
+      mainState = 'NORMAL_OPERATION';
+      subState = 'SHOW_DATE_TIME';
+      setMode('wiring');
+    }
+
+    function initTooltips() {
+      const tooltip = document.getElementById('tooltip');
+      document.querySelectorAll('[data-info]').forEach(el => {
+        el.addEventListener('mousemove', (e) => {
+          tooltip.style.display = 'block';
+          tooltip.textContent = el.getAttribute('data-info');
+          tooltip.style.left = (e.pageX + 15) + 'px';
+          tooltip.style.top = (e.pageY + 15) + 'px';
+        });
+        el.addEventListener('mouseleave', () => tooltip.style.display = 'none');
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTooltips();
+      renderScreen();
+      updateStateTable();
+    });
+  </script>
+</body>
+</html>
