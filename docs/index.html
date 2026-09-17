@@ -647,6 +647,90 @@ git push origin main</code>
           </div>
         </div>
       </div>
+
+      <!-- GIT PUSKA / CHEAT SHEET -->
+      <div class="cheatsheet-block">
+        <div class="cheatsheet-header">
+          <div>
+            <h3>🧾 Git Puska (Cheat Sheet)</h3>
+            <p>A leggyakoribb Git parancsok rövid magyarázattal — mentsd el vagy nyomtasd ki, ha még nem vagy otthon a Git-ben.</p>
+          </div>
+          <div class="cheatsheet-links">
+            <a href="https://education.github.com/git-cheat-sheet-education.pdf" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+              <span>📄 GitHub Education Puska (PDF)</span>
+              <span class="external-icon">↗</span>
+            </a>
+            <a href="https://git-scm.com/cheat-sheet" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+              <span>📄 Hivatalos Git Cheat Sheet</span>
+              <span class="external-icon">↗</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="cheatsheet-grid">
+          <!-- Beállítás / Klónozás -->
+          <div class="cheat-category">
+            <h4>⚙️ Beállítás & Klónozás</h4>
+            <div class="cheat-item"><code>git init</code><span>Új Git repó létrehozása a jelenlegi mappában</span></div>
+            <div class="cheat-item"><code>git clone &lt;url&gt;</code><span>Létező távoli repó lemásolása helyben</span></div>
+            <div class="cheat-item"><code>gh repo fork &lt;url&gt;</code><span>Fork: saját GitHub másolat készítése (nem sima git parancs, hanem GitHub funkció — a weben "Fork" gombbal vagy a <code>gh</code> CLI-vel érhető el)</span></div>
+            <div class="cheat-item"><code>git config --global user.name "Név"</code><span>Commitokhoz tartozó név beállítása</span></div>
+            <div class="cheat-item"><code>git config --global user.email "email"</code><span>Commitokhoz tartozó email beállítása</span></div>
+          </div>
+
+          <!-- Napi munkafolyamat -->
+          <div class="cheat-category">
+            <h4>📝 Napi Munkafolyamat</h4>
+            <div class="cheat-item"><code>git status</code><span>Módosított / staged / untracked fájlok listázása</span></div>
+            <div class="cheat-item"><code>git add &lt;fájl&gt;</code><span>Egy fájl hozzáadása a staging area-hoz</span></div>
+            <div class="cheat-item"><code>git add .</code><span>Az összes módosítás staging area-hoz adása</span></div>
+            <div class="cheat-item"><code>git commit -m "üzenet"</code><span>Staged módosítások mentése a history-ba</span></div>
+            <div class="cheat-item"><code>git diff</code><span>Nem staged módosítások megtekintése soronként</span></div>
+          </div>
+
+          <!-- Távoli repó -->
+          <div class="cheat-category">
+            <h4>☁️ Távoli Repó (Remote)</h4>
+            <div class="cheat-item"><code>git remote -v</code><span>Beállított távoli repók listázása</span></div>
+            <div class="cheat-item"><code>git remote add origin &lt;url&gt;</code><span>Új távoli repó (origin) hozzáadása</span></div>
+            <div class="cheat-item"><code>git push origin main</code><span>Helyi commitok feltöltése a távoli repóba</span></div>
+            <div class="cheat-item"><code>git pull origin main</code><span>Távoli változtatások letöltése és egyesítése</span></div>
+            <div class="cheat-item"><code>git fetch</code><span>Távoli állapot letöltése egyesítés nélkül</span></div>
+          </div>
+
+          <!-- Branch-ek -->
+          <div class="cheat-category">
+            <h4>🌿 Branch-ek</h4>
+            <div class="cheat-item"><code>git branch</code><span>Helyi branch-ek listázása</span></div>
+            <div class="cheat-item"><code>git branch &lt;név&gt;</code><span>Új branch létrehozása</span></div>
+            <div class="cheat-item"><code>git checkout &lt;branch&gt;</code><span>Átváltás egy másik branch-re</span></div>
+            <div class="cheat-item"><code>git checkout -b &lt;branch&gt;</code><span>Új branch létrehozása és arra váltás</span></div>
+            <div class="cheat-item"><code>git merge &lt;branch&gt;</code><span>Egy branch beolvasztása az aktuálisba</span></div>
+          </div>
+
+          <!-- Történet vizsgálata -->
+          <div class="cheat-category">
+            <h4>🔍 Történet Vizsgálata</h4>
+            <div class="cheat-item"><code>git log</code><span>Commit history megtekintése (legújabb elöl)</span></div>
+            <div class="cheat-item"><code>git log --oneline --graph</code><span>Tömör, vizuális branch-history</span></div>
+            <div class="cheat-item"><code>git show &lt;commit&gt;</code><span>Egy adott commit tartalmának megtekintése</span></div>
+          </div>
+
+          <!-- Hibajavítás / Visszaállítás -->
+          <div class="cheat-category">
+            <h4>🛟 Hibajavítás & Visszaállítás</h4>
+            <div class="cheat-item"><code>git restore &lt;fájl&gt;</code><span>Nem staged módosítások eldobása egy fájlon</span></div>
+            <div class="cheat-item"><code>git restore --staged &lt;fájl&gt;</code><span>Fájl kivétele a staging area-ból (unstage)</span></div>
+            <div class="cheat-item"><code>git reset --soft HEAD~1</code><span>Utolsó commit visszavonása, változtatások megtartva</span></div>
+            <div class="cheat-item"><code>git stash</code><span>Nem kész módosítások ideiglenes eltárolása</span></div>
+            <div class="cheat-item"><code>git stash pop</code><span>Legutóbb eltárolt módosítások visszaállítása</span></div>
+          </div>
+        </div>
+
+        <div class="panel-desc-alert" style="margin-top: 1.5rem;">
+          <strong>💡 Tipp:</strong> Ha elakadsz egy Git paranccsal, a <code>git status</code> szinte mindig megmutatja a következő javasolt lépést a terminál kimenetében — olvasd el figyelmesen, mielőtt Google-be írnád a hibát!
+        </div>
+      </div>
     </section>
 
     <!-- FOOTER -->
