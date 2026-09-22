@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "../../External/Inc/example.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,19 +63,81 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
+
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
   /* Configure the system clock */
   SystemClock_Config();
 
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  /* USER CODE BEGIN 2 */
 
-  HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
-        HAL_Delay(300);
+#define DEBOUNCING_TRESHOLD 2500
+
+  uint32_t count_debounce = 0;		// number of identical states
+  uint8_t previous_state_debounce;	// button previous state
+  uint8_t current_state_debounce = HAL_GPIO_ReadPin(HMI_BTN_1_GPIO_Port, HMI_BTN_1_Pin);	//button actual state
+
+  uint8_t previous_state_edge = HAL_GPIO_ReadPin(HMI_BTN_1_GPIO_Port, HMI_BTN_1_Pin);		//variable for edge detection
+  uint32_t counter = 0;				// cycle counter
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+
+	  count_debounce = 0;				// variable reset
+	  //check the state of the button until it is sufficiently stable
+	  while (count_debounce < DEBOUNCING_TRESHOLD)
+	  {
+		  previous_state_debounce = current_state_debounce;
+		  current_state_debounce = HAL_GPIO_ReadPin(HMI_BTN_1_GPIO_Port, HMI_BTN_1_Pin);
+		  //if the previous state is equal by the actual state increment the debounce variable
+		  if (previous_state_debounce == current_state_debounce)
+		  {
+			  count_debounce++;
+		  }
+
+	  }
+	  //edge detection, counter incrementation if it is happened
+	  if (current_state_debounce && !previous_state_edge)
+	  {
+		  //In order to show the actual value of the counter on the LEDs
+		  //	the counter should be incremented before setting the LED ports
+		  counter++;
+
+		  //set the LED control pins based on the counter value
+		  HAL_GPIO_WritePin(HMI_LED_1_GPIO_Port, HMI_LED_1_Pin, counter & 0x08 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(HMI_LED_2_GPIO_Port, HMI_LED_2_Pin, counter & 0x04 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(HMI_LED_3_GPIO_Port, HMI_LED_3_Pin, counter & 0x02 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(HMI_LED_4_GPIO_Port, HMI_LED_4_Pin, counter & 0x01 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	  }
+
+	  previous_state_edge = current_state_debounce;	//save the actual state
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
 }
 
 /**
@@ -90,20 +152,15 @@ void SystemClock_Config(void)
   /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 168;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 7;
-  RCC_OscInitStruct.PLL.PLLR = 2;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -113,12 +170,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
