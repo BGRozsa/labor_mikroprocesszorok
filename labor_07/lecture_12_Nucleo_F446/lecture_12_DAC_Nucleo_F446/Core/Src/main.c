@@ -129,14 +129,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	 // for (int i = 0; i < 100; i++)
+	  for (int i = 0; i < 100; i++)
 	  {
 		  /* Set the digital input value */
-		 // HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, sine_data[i]);
+		  HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, sine_data[i]);
 		  /* Start the analog-digital conversion */
-		  //HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
+		  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 		  /* Set the delay, this will be the time between two points */
-		 // HAL_Delay(0);
+		  HAL_Delay(0);
 	  }
 
     /* USER CODE END WHILE */
